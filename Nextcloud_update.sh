@@ -7,7 +7,7 @@ unset NC_UPDATE
 unset MYCNFPW
 Desligar NCDB
 
-# Tech and Me © - 2017, https://www.techandme.se/
+# Pablo Almeida © - 2017
 
 # Verifique se há erros + código de depuração e aborta se algo não estiver certo
 # 1 = ON
