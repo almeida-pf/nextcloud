@@ -1,6 +1,6 @@
 #! / Bin / bash
 
-# Tech and Me © - 2017, https://www.techandme.se/
+# Pablo Almeida © - 2017
 
 # Prefira o IPv4
 Sed -i " s | #precedence :: ffff: 0: 0/96 100 | precedência :: ffff: 0: 0/96 100 | g " /etc/gai.conf
