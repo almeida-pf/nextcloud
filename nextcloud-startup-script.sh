@@ -1,4 +1,4 @@
-#! / Bin / bash
+#!/bin/bash
 # Shellcheck disable = 2034,2059
 verdade
 # Shellcheck source = lib.sh
