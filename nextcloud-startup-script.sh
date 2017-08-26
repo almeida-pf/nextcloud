@@ -6,7 +6,7 @@ FIRST_IFACE = 1 && CHECK_CURRENT_REPO = 1 .  <( Curl -sL https://raw.githubuserc
 unset FIRST_IFACE
 unset CHECK_CURRENT_REPO
 
-# Tech and Me © - 2017, https://www.techandme.se/
+# Pablo Almeida © - 2017
 
 # # Se desejar o modo de depuração, ative-o mais para baixo no código na linha ~ 60
 
