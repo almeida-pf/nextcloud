@@ -1,4 +1,4 @@
-#! / Bin / bash
+#!/bin/bash
 
 # Pablo Almeida © - 2017
 
