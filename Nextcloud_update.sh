@@ -1,310 +1,309 @@
 #!/bin/bash
-# Shellcheck disable = 2034,2059
-verdade
-# Shellcheck source = lib.sh
-NCDB = 1 && MYCNFPW = 1 && NC_UPDATE = 1 .  <( Curl -sL https://raw.githubusercontent.com/nextcloud/vm/master/lib.sh )
+# shellcheck disable=2034,2059
+true
+# shellcheck source=lib.sh
+NCDB=1 && MYCNFPW=1 && NC_UPDATE=1 . <(curl -sL https://raw.githubusercontent.com/almeida-pf/nextcloud/master/Lib.sh)
 unset NC_UPDATE
 unset MYCNFPW
-Desligar NCDB
+unset NCDB
 
-# Pablo Almeida © - 2017
+# Pablo Almeida
 
-# Verifique se há erros + código de depuração e aborta se algo não estiver certo
+# Verifique se ha erros + debug code aborta se algo nao estiver certo
 # 1 = ON
-# 0 = DESLIGADO
-DEBUG = 0
-modo de depuração
+# 0 = OFF
+DEBUG=0
+debug_mode
 
-PATH = / usr / local / sbin: / usr / local / bin: / usr / sbin: / usr / bin: / sbin: / bin: / snap / bin
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
 
-# Coloque o nome do seu tema aqui:
-THEME_NAME = " "
+# Coloque seu nome de tema aqui:
+THEME_NAME=""
 
 # Deve ser root
-Se  ! Is_root
-então
-    Echo  " Deve ser root para executar script, no tipo Ubuntu: sudo -i "
-    Saída 1
-Fi
+if ! is_root
+then
+    echo "Deve ser root para executar o script, no Ubuntu: sudo -i"
+    exit 1
+fi
 
-# Verifique se dpkg ou apt estão sendo executados
-Is_process_running dpkg
-Is_process_running apt
+# Verifica se dpkg ou apt estao funcionando
+is_process_running dpkg
+is_process_running apt
 
-# Upgrade do sistema
-Atualização do apt -q4 & spinner_loading
-Exportar DEBIAN_FRONTEND = não interativo ; Apt dist-upgrade -y -o Dpkg :: Options :: = " --force-confdef " -o Dpkg :: Options :: = " --force-confold "
+# System Upgrade
+apt update -q4 & spinner_loading
+export DEBIAN_FRONTEND=noninteractive ; apt dist-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
-# Atualização Redis PHP extensão
-Se  tipo pecl > / dev / null 2> & 1
-então
-    Install_if_not php7.0-dev
-    Echo  " Tentando atualizar a extensão Redis Pecl ... "
-    Redes de atualização do pecl
-    Service apache2 reiniciar
-Fi
+# Atualiza Redis PHP extention
+if type pecl > /dev/null 2>&1
+then
+    install_if_not php7.0-dev
+    echo "Trying to upgrade the Redis Pecl extenstion..."
+    pecl upgrade redis
+    service apache2 restart
+fi
 
-# Atualize as imagens do docker
-# Isso atualiza todas as imagens do Docker:
-Se [ " $ ( docker ps -a > / dev / null 2> & 1  &&  echo sim ||  echo no ) "  ==  " sim " ]
-então
-Imagens do docker | Grep -v REPOSITORIA | Awk ' {print $ 1} '  | Xargs -L1 docker pull
-Fi
+# Atualiza docker images
+# Isto atualiza todos os Docker images:
+if [ "$(docker ps -a >/dev/null 2>&1 && echo yes || echo no)" == "yes" ]
+then
+docker images | grep -v REPOSITORY | awk '{print $1}' | xargs -L1 docker pull
+fi
 
-# # OLD WAY ##
-# Se ["$ (imagem docker inspecionar onlyoffice / documentserver> / dev / null 2> & 1 && echo sim || echo no)" == "sim"]
-# Então
-#     Echo "Atualizando o recipiente do Docker para o OnlyOffice ..."
-#     Docker pull onlyoffice / documentserver
-# Fi
+## Caminho antigo ##
+#if [ "$(docker image inspect onlyoffice/documentserver >/dev/null 2>&1 && echo yes || echo no)" == "yes" ]
+#then
+#    echo "Atuallizando Docker container para OnlyOffice..."
+#    docker pull onlyoffice/documentserver
+#fi
 #
-# Se ["$ (imagem docker inspecionar colabora / código> / dev / null 2> & 1 && echo sim || echo no)" == "sim"]
-# Então
-#     Echo "Atualizando o recipiente Docker para Collabora ..."
-#     Docker pull colabora / code
-# Fi
+#if [ "$(docker image inspect collabora/code >/dev/null 2>&1 && echo yes || echo no)" == "yes" ]
+#then
+#    echo "Atuallizando Docker container para Collabora..."
+#    docker pull collabora/code
+#fi
 
-# Limpeza de pacotes não utilizados
-Autor eletrodo -y
-Apt autoclean
+# Limpar pacotes não utilizados
+apt autoremove -y
+apt autoclean
 
-# Atualize o GRUB, apenas no caso
-Update-grub
+# Atualiza GRUB
+update-grub
 
-# Remover listas de atualização
-Rm / var / lib / apt / lists / * -r
+# Remove listas de update
+rm /var/lib/apt/lists/* -r
 
-# Defina permissões seguras
-Se [ !  -f  " $ SECURE " ]
-então
-    Mkdir -p " $ SCRIPTS "
-    Download_static_script setup_secure_permissions_nextcloud
-    Chmod + x " $ SECURE "
-Fi
+# Set secure permissions
+if [ ! -f "$SECURE" ]
+then
+    mkdir -p "$SCRIPTS"
+    download_static_script setup_secure_permissions_nextcloud
+    chmod +x "$SECURE"
+fi
 
-# Versões principais não suportadas
-Se [ " $ {CURRENTVERSION %% . * } "  ==  " $ NCBAD " ]
-então
-    eco
-    Echo  " Por favor, note que as atualizações entre múltiplas versões principais não são suportadas! Sua situação é: "
-    Echo  " Versão atual: $ CURRENTVERSION "
-    Echo  " Última versão: $ NCVERSION "
-    eco
-    Echo  " É melhor manter seu servidor Nextcloud atualizado regularmente e instalar todos os lançamentos "
-    Echo  " e grandes lançamentos sem ignorar nenhum deles, como saltar lançamentos aumenta o risco de "
-    Echo  " . Os lançamentos principais são 9, 10, 11 e 12. As versões de pontos são lançamentos intermediários para cada "
-    Echo  " . Por exemplo, 9.0.52 e 10.0.2 são lançamentos pontuais " .
-    eco
-    Echo  " Entre em contato com a Tech and Me para ajudá-lo na atualização entre as principais versões " .
-    Echo  " https://shop.techandme.se/index.php/product-category/support/ "
-    eco
-    Saída 1
-Fi
+# versões não suportadas
+if [ "${CURRENTVERSION%%.*}" == "$NCBAD" ]
+then
+    echo
+    echo "Por favor, note que as atualizações entre múltiplas versões principais não são suportadas. Sua situação é:"
+    echo "Versao Atual: $CURRENTVERSION"
+    echo "Ultimo Lancamento: $NCVERSION"
+    echo
+    echo "E melhor manter seu servidor Nextcloud atualizado regularmente e instalar todos os lancamentos de pontos"
+    echo "E grandes lancamentos sem ignorar nenhum deles, a medida que saltear os lancamentos aumenta o risco de"
+    echo "Erros. Os lancamentos principais sao 9, 10, 11 e 12. Os lançamentos de pontos sao lancamentos intermediarios para cada um"
+    echo "Maior lancamento. Por exemplo, 9.0.52 e 10.0.2 sao lancamentos pontuais."
+    echo
+    echo "Entre em contato com Pablo Almeida para ajuda-lo a atualizar entre as principais versoes."
+    echo
+    exit 1
+fi
 
-# Verifique se a nova versão é maior do que a versão atual instalada.
-Se version_gt " $ NCVERSION "  " $ CURRENTVERSION "
-então
-    Echo  "O último lançamento é: $ NCVERSION . A versão atual é: $ CURRENTVERSION . "
-    Printf  " $ {Green} Nova versão disponível! Upgrade continua ... $ {Color_Off} \ n "
-outro
-    Echo  "A versão mais recente é: $ NCVERSION . A versão atual é: $ CURRENTVERSION . "
-    Echo  " Não é necessário atualizar, este script irá sair ... "
-    Saia 0
-Fi
+# Verifique se a nova versao e maior do que a versao atual instalada.
+if version_gt "$NCVERSION" "$CURRENTVERSION"
+then
+    echo "Latest release is: $NCVERSION. Current version is: $CURRENTVERSION."
+    printf "${Green}Nova versao disponivel! O upgrade continua...${Color_Off}\n"
+else
+    echo "Ultima versao e: $NCVERSION. versao atual e: $CURRENTVERSION."
+    echo "Nao e necessario atualizar, esse script ira sair..."
+    exit 0
+fi
 
-# Certifique-se de que as instaces antigas também possam atualizar
-Se [ !  -f  " $ MYCNF " ] && [ -f /var/mysql_password.txt]
-então
-Regressionpw     = $ ( cat /var/mysql_password.txt )
-Gato << LOGIN >  " $ MYCNF "
-[cliente]
-Senha = ' $ regressionpw '
-ENTRAR
-    Chmod 0600 $ MYCNF
-    Raiz chown: root $ MYCNF
-    Echo  " Reinicie o processo de atualização, corrigimos o arquivo de senha $ MYCNF " .
-    Saída 1    
-Elif [ -z  " $ MARIADBMYCNFPASS " ] && [ -f /var/mysql_password.txt]
-então
-Regressionpw     = $ ( cat /var/mysql_password.txt )
+# Certifique-se de que as instancias antigas tambem possam atualizar
+if [ ! -f "$MYCNF" ] && [ -f /var/mysql_password.txt ]
+then
+    regressionpw=$(cat /var/mysql_password.txt)
+cat << LOGIN > "$MYCNF"
+[client]
+password='$regressionpw'
+LOGIN
+    chmod 0600 $MYCNF
+    chown root:root $MYCNF
+    echo "Reinicie o processo de atualizacao, corrigimos o arquivo de senha $MYCNF."
+    exit 1    
+elif [ -z "$MARIADBMYCNFPASS" ] && [ -f /var/mysql_password.txt ]
+then
+    regressionpw=$(cat /var/mysql_password.txt)
     {
-    Echo  " [cliente] "
-    Echo  " password = ' $ regressionpw ' "
-    } >>  " $ MYCNF "
-    Echo  " Reinicie o processo de atualização, corrigimos o arquivo de senha $ MYCNF " .
-    Saída 1    
-Fi
+    echo "[client]"
+    echo "password='$regressionpw'"
+    } >> "$MYCNF"
+    echo "Reinicie o processo de atualização, corrigimos o arquivo de senha $MYCNF."
+    exit 1    
+fi
 
-Se [ -z  " $ MARIADBMYCNFPASS " ]
-então
-    Echo  " Algo deu errado ao copiar sua senha mysql para $ MYCNF " .
-    Echo  " Nós escrevemos um guia sobre como corrigir isso. Você pode encontrar o guia aqui: "
-    Echo  " https://www.techandme.se/reset-mysql-5-7-root-password/ "
-    Saída 1
-outro
-    Rm -f /var/mysql_password.txt
-Fi
+if [ -z "$MARIADBMYCNFPASS" ]
+then
+    echo "Algo deu errado ao copiar sua senha mysql para $MYCNF."
+    echo "Nos escrevemos um guia sobre como corrigir isso. Voce pode encontrar o guia aqui:"
+    echo "https://www.techandme.se/reset-mysql-5-7-root-password/"
+    exit 1
+else
+    rm -f /var/mysql_password.txt
+fi
 
-# Upgrade Nextcloud
-Echo  " Verificar a versão mais recente no servidor de download do Nextcloud e se for possível fazer o download ... "
-Se  ! Wget -q - show-progress -T 10 -t 2 " $ NCREPO / $ STABLEVERSION .tar.bz2 "
-então
-    eco
-    printf  " $ {iRed} Nextcloud% s não existe. $ {Color_Off} \ n "  " $ NCVERSION "
-    Echo  " Verifique as versões disponíveis aqui: $ NCREPO "
-    eco
-    Saída 1
-outro
-Rm     -f " $ STABLEVERSION .tar.bz2 "
-Fi
+# Atualiza Nextcloud
+echo "Verificando a versao mais recente no servidor de download do Nextcloud e se for possivel baixar..."
+if ! wget -q --show-progress -T 10 -t 2 "$NCREPO/$STABLEVERSION.tar.bz2"
+then
+    echo
+    printf "${IRed}Nextcloud %s doesn't exist.${Color_Off}\n" "$NCVERSION"
+    echo "Verifique as versoes disponiveis aqui: $NCREPO"
+    echo
+    exit 1
+else
+    rm -f "$STABLEVERSION.tar.bz2"
+fi
 
-Echo  " Fazendo backup de arquivos e atualizando para Nextcloud $ NCVERSION em 10 segundos ... "
-Echo  " Pressione CTRL + C para abortar. "
-Durma 10
+echo "Fazendo backup de arquivos e atualizando para Nextcloud $NCVERSION in 10 seconds..."
+echo "Press CTRL+C to abort."
+sleep 10
 
-# Verifique se o backup existe e mude para o antigo
-Echo  " Fazendo backup de dados ... "
-DATA = $ ( data +% Y-% m-% d-% H% M% S )
-Se [ -d  $ BACKUP ]
-então
-    Mkdir -p " / var / NCBACKUP_OLD / $ DATE "
-    Mv $ BACKUP / *  " / var / NCBACKUP_OLD / $ DATE "
-    Rm -R $ BACKUP
-    Mkdir -p $ BACKUP
-Fi
+# Verifique se o backup existe e mova para o antigo
+echo "Backing up data..."
+DATE=$(date +%Y-%m-%d-%H%M%S)
+if [ -d $BACKUP ]
+then
+    mkdir -p "/var/NCBACKUP_OLD/$DATE"
+    mv $BACKUP/* "/var/NCBACKUP_OLD/$DATE"
+    rm -R $BACKUP
+    mkdir -p $BACKUP
+fi
 
-# Dados de backup
-Para  pastas  em aplicativos de configuração de temas
-Faz
-    Se [[ " $ ( rsync -Aax $ NCPATH / $ folders  $ BACKUP ) "  -eq 0]]
-    então
-        BACKUP_OK = 1
-    outro
+# Backup dados
+for folders in config themes apps
+do
+    if [[ "$(rsync -Aax $NCPATH/$folders $BACKUP)" -eq 0 ]]
+    then
+        BACKUP_OK=1
+    else
         unset BACKUP_OK
-    Fi
-feito
+    fi
+done
 
-Se [ -z  $ BACKUP_OK ]
-então
-    Echo  "O backup não estava OK. Verifique $ BACKUP e veja se as pastas são copiadas de forma adequada "
-    Saída 1
-outro
-    Printf  " $ {Green} \ nBackup OK! $ {Color_Off} \ n "
-Fi
+if [ -z $BACKUP_OK ]
+then
+    echo "O backup nao estava OK. por favor, verifique $BACKUP E veja se as pastas sao copiadas adequadamente"
+    exit 1
+else
+    printf "${Green}\nBackup OK!${Color_Off}\n"
+fi
 
 # Backup MARIADB
-Se mysql -u raiz -p " $ MARIADBMYCNFPASS " -e " MOSTRAR bases de dados como ' $ NCCONFIGDB ' "  > / dev / null
-então
-    Echo  " Fazendo mysqldump de $ NCCONFIGDB ... "
-    Check_command mysqldump -u root -p " $ MARIADBMYCNFPASS " -d " $ NCCONFIGDB "  >  " $ BACKUP " /nextclouddb.sql
-outro
-    Echo  " Fazendo mysqldump de todos os bancos de dados ... "
-    Check_command mysqldump -u root -p " $ MARIADBMYCNFPASS " -d - todas-bases de dados >  " $ BACKUP " /alldatabases.sql
-Fi
+if mysql -u root -p"$MARIADBMYCNFPASS" -e "SHOW DATABASES LIKE '$NCCONFIGDB'" > /dev/null
+then
+    echo "Fazendo mysqldump do $NCCONFIGDB..."
+    check_command mysqldump -u root -p"$MARIADBMYCNFPASS" -d "$NCCONFIGDB" > "$BACKUP"/nextclouddb.sql
+else
+    echo "Fazendo mysqldump de todos databases..."
+    check_command mysqldump -u root -p"$MARIADBMYCNFPASS" -d --all-databases > "$BACKUP"/alldatabases.sql
+fi
 
-# Faça o download e valide o pacote Nextcloud
-Check_command download_verify_nextcloud_stable
+# Baixe e valide o pacote Nextcloud
+check_command download_verify_nextcloud_stable
 
-Se [ -f  " $ HTML / $ STABLEVERSION .tar.bz2 " ]
-então
-    Echo  " $ HTML / $ STABLEVERSION .tar.bz2 existe "
-outro
-    Echo  " Abortando, algo deu errado com o download "
-    Saída 1
-Fi
+if [ -f "$HTML/$STABLEVERSION.tar.bz2" ]
+then
+    echo "$HTML/$STABLEVERSION.tar.bz2 existe"
+else
+    echo "Abortando, algo deu errado com o download"
+    exit 1
+fi
 
-Se [ -d  $ BACKUP / config /]
-então
-    Echo  " $ BACKUP / config / exists "
-outro
-    Echo  " Algo deu errado ao fazer backup de sua antiga instância do nextcloud, por favor verifique $ BACKUP se a configuração / pasta existir. "
-    Saída 1
-Fi
+if [ -d $BACKUP/config/ ]
+then
+    echo "$BACKUP/config/ existe"
+else
+    echo "Algo deu errado ao fazer backup de sua antiga instancia proxima a proxima, por favor verifique $BACKUP se config/ pasta ja existe."
+    exit 1
+fi
 
-Se [ -d  $ BACKUP / apps /]
-então
-    Echo  " $ BACKUP / apps / exists "
-outro
-    Echo  " Algo deu errado ao fazer backup de sua antiga instância próxima à próxima, verifique $ BACKUP se existem apps / pasta " .
-    Saída 1
-Fi
+if [ -d $BACKUP/apps/ ]
+then
+    echo "$BACKUP/apps/ existe"
+else
+    echo "Algo deu errado ao fazer backup de sua antiga instancia proxima a proxima, por favor verifique $BACKUP se apps/ pasta ja existe."
+    exit 1
+fi
 
-Se [ -d  $ BACKUP / themes /]
-então
-    Echo  " $ BACKUP / themes / exists "
-    eco 
-    Printf  " $ {Green} Todos os arquivos são copiados. $ {Color_Off} \ n "
-    Sudo -u www-data php " $ NCPATH " / occ manutenção: modo - em
-    Echo  " Removendo a instância antiga Nextcloud em 5 segundos ... "  && sleep 5
-Rm     -rf $ NCPATH
-    Tar -xjf " $ HTML / $ STABLEVERSION .tar.bz2 " -C " $ HTML "
-    rm " $ HTML / $ STABLEVERSION .tar.bz2 "
-    Cp -R $ BACKUP / themes " $ NCPATH " /
-    Cp -R $ BACKUP / config " $ NCPATH " /
-    festa $ SEGURO  & spinner_loading
-    Sudo -u www-data php " $ NCPATH " / occ manutenção: modo - off
-    Sudo -u www-data php " $ NCPATH " / occ upgrade --no-app-disable
-outro
-    Echo  " Algo deu errado ao fazer backup de sua antiga instância próxima à próxima, verifique $ BACKUP se as pastas existem. "
-    Saída 1
-Fi
+if [ -d $BACKUP/themes/ ]
+then
+    echo "$BACKUP/themes/ existe"
+    echo 
+    printf "${Green}Todos os arquivos sao copiados.${Color_Off}\n"
+    sudo -u www-data php "$NCPATH"/occ maintenance:mode --on
+    echo "Removendo a instancia antiga Nextcloud em 5 segundos..." && sleep 5
+    rm -rf $NCPATH
+    tar -xjf "$HTML/$STABLEVERSION.tar.bz2" -C "$HTML"
+    rm "$HTML/$STABLEVERSION.tar.bz2"
+    cp -R $BACKUP/themes "$NCPATH"/
+    cp -R $BACKUP/config "$NCPATH"/
+    bash $SECURE & spinner_loading
+    sudo -u www-data php "$NCPATH"/occ maintenance:mode --off
+    sudo -u www-data php "$NCPATH"/occ upgrade --no-app-disable
+else
+    echo "Algo deu errado ao fazer backup de sua antiga instancia proxima a proxima, por favor verifique $BACKUP se a pasta ja existe."
+    exit 1
+fi
 
-# Recuperar aplicativos que existem na pasta de aplicativos de backup
-# Run_static_script recover_apps
+# Recupere aplicativos que existem na pasta de aplicativos de backup
+# run_static_script recover_apps
 
-# Habilitar aplicativos
-Se [ -d  " $ SNAPDIR " ]
-então
-    Run_app_script spreedme
-Fi
+# Ativar aplicativos
+if [ -d "$SNAPDIR" ]
+then
+    run_app_script spreedme
+fi
 
-# Alterar o proprietário da pasta $ BACKUP para a raiz
-Chown -R raiz: root " $ BACKUP "
+# Altere o proprietario da pasta $BACKUP para a raiz
+chown -R root:root "$BACKUP"
 
-# Defina o carregamento máximo em Nextcloud .htaccess
-Configure_max_upload
+# Defina o upload maximo no Nextcloud .htaccess
+configure_max_upload
 
-# Define $ THEME_NAME
-VALUE2 = " $ THEME_NAME "
-Se  ! Grep -Fxq " $ VALUE2 "  " $ NCPATH /config/config.php "
-então
-    Sed -i " s | 'theme' => '', | 'tema' => ' $ THEME_NAME ', | g "  " $ NCPATH " /config/config.php
-    Echo  " Conjunto de temas "
-Fi
+# Set $THEME_NAME
+VALUE2="$THEME_NAME"
+if ! grep -Fxq "$VALUE2" "$NCPATH/config/config.php"
+then
+    sed -i "s|'theme' => '',|'theme' => '$THEME_NAME',|g" "$NCPATH"/config/config.php
+    echo "Theme set"
+fi
 
-# URLs bonitos
-Echo  " Definir RewriteBase para \" / \ " em config.php ... "
-Chown -R www-data: www-data " $ NCPATH "
-Sudo -u www-data php " $ NCPATH " / occ config: system: configure htaccess.RewriteBase --value = " / "
-Sudo -u www-data php " $ NCPATH " / occ manutenção: atualização: htaccess
-Bash " $ SECURE "
+# URLs Bonitas
+echo "Setting RewriteBase to \"/\" in config.php..."
+chown -R www-data:www-data "$NCPATH"
+sudo -u www-data php "$NCPATH"/occ config:system:set htaccess.RewriteBase --value="/"
+sudo -u www-data php "$NCPATH"/occ maintenance:update:htaccess
+bash "$SECURE"
 
-# Reparação
-Sudo -u www-data php " $ NCPATH " / occ manutenção: reparo
+# Reparar
+sudo -u www-data php "$NCPATH"/occ maintenance:repair
 
-CURRENTVERSION_after = $ ( sudo -u www-data php " $ NCPATH " / occ status | grep " versionstring "  | awk ' {print $ 3} ' )
-Se [[ " $ NCVERSION "  ==  " $ CURRENTVERSION_after " ]]
-então
-    eco
-    Echo  "A versão mais recente é: $ NCVERSION . A versão atual é: $ CURRENTVERSION_after . "
-    Echo  " ACTUALIZAÇÃO SUCESSO! "
-    Echo  " NEXTCLOUD UPDATE sucesso- $ ( data + " % Y% m% d " ) "  >> /var/log/cronjobs_success.log
-    Sudo -u www-data php " $ NCPATH " / status occ
-    Sudo -u www-data php " $ NCPATH " / occ manutenção: modo - off
-    eco
-    Eco  " Se você notar que alguns aplicativos estão desativados, é devido a que eles não são compatíveis com a nova versão Nextcloud. "
-    Echo  " Para recuperar seus aplicativos antigos, verifique $ BACKUP / apps e copie-os para $ NCPATH / apps manualmente. "
-    eco
-    Eco  " Obrigado por usar o atualizador da Tech and Me! "
-    # # Un-hash this se você quiser que o sistema seja reiniciado
-    # Reinicialização
-    Saia 0
-outro
-    eco
-    Echo  "A versão mais recente é: $ NCVERSION . A versão atual é: $ CURRENTVERSION_after . "
-    Sudo -u www-data php " $ NCPATH " / status occ
-    Echo  " UPGRADE FAILED! "
-    Echo  " Seus arquivos ainda estão com backup em $ BACKUP . Não há preocupações! "
-    Echo  " Informe esta questão para $ QUESTÕES "
-    Saída 1
-Fi
+CURRENTVERSION_after=$(sudo -u www-data php "$NCPATH"/occ status | grep "versionstring" | awk '{print $3}')
+if [[ "$NCVERSION" == "$CURRENTVERSION_after" ]]
+then
+    echo
+    echo "versao mais recente e: $NCVERSION. versao atual e: $CURRENTVERSION_after."
+    echo "versao atualizada com sucesso!"
+    echo "NEXTCLOUD atualizado com success-$(date +"%Y%m%d")" >> /var/log/cronjobs_success.log
+    sudo -u www-data php "$NCPATH"/occ status
+    sudo -u www-data php "$NCPATH"/occ maintenance:mode --off
+    echo
+    echo "Se voce notar que alguns aplicativos estao desativados, e devido a que eles nao sao compativeis com a nova versao Nextcloud."
+    echo "Para recuperar seus aplicativos antigos, verifique $BACKUP/apps E copie-os para $NCPATH/apps manual."
+    echo
+    echo "Obrigado por usar o Script_atualiza Nextcloud por Pablo Almeida!"
+    ## Descarte isso se quiser que o sistema seja reiniciado
+    # reboot
+    exit 0
+else
+    echo
+    echo "Versao mais recente e: $NCVERSION. versao atual e: $CURRENTVERSION_after."
+    sudo -u www-data php "$NCPATH"/occ status
+    echo "Atualização falhou!"
+    echo "Seus arquivos ainda estao protegidos em $BACKUP. Nao se preocupe!"
+    echo "Informe esta questao para $ISSUES"
+    exit 1
+fi
