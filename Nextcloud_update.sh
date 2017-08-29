@@ -9,7 +9,7 @@ unset NCDB
 
 # Pablo Almeida
 
-# Verifique se ha erros + debug code aborta se algo nao estiver certo
+# Verifica se ha erros no code e aborta se algo nao estiver correto
 # 1 = ON
 # 0 = OFF
 DEBUG=0
@@ -64,7 +64,7 @@ fi
 #    docker pull collabora/code
 #fi
 
-# Limpar pacotes não utilizados
+# Limpar pacotes nao utilizados
 apt autoremove -y
 apt autoclean
 
@@ -82,11 +82,11 @@ then
     chmod +x "$SECURE"
 fi
 
-# versões não suportadas
+# versões nao suportadas
 if [ "${CURRENTVERSION%%.*}" == "$NCBAD" ]
 then
     echo
-    echo "Por favor, note que as atualizações entre múltiplas versões principais não são suportadas. Sua situação é:"
+    echo "Por favor, note que as atualizacoes entre multiplas versoes principais nao sao suportadas. Sua situacao e:"
     echo "Versao Atual: $CURRENTVERSION"
     echo "Ultimo Lancamento: $NCVERSION"
     echo
@@ -130,7 +130,7 @@ then
     echo "[client]"
     echo "password='$regressionpw'"
     } >> "$MYCNF"
-    echo "Reinicie o processo de atualização, corrigimos o arquivo de senha $MYCNF."
+    echo "Reinicie o processo de atualizacao, corrigimos o arquivo de senha $MYCNF."
     exit 1    
 fi
 
