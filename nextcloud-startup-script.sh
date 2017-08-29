@@ -56,7 +56,7 @@ else
     unset CHECK_CURRENT_REPO
 fi
 
-# Verifique se ha erros + Debug e aborta se algo nao estiver correto
+# Verifica se ha erros no code e aborta se algo nao estiver correto
 # 1 = ON
 # 0 = OFF
 DEBUG=0
