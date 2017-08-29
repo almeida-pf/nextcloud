@@ -58,7 +58,7 @@ SECURE="$SCRIPTS/setup_secure_permissions_nextcloud.sh"
 SSL_CONF="/etc/apache2/sites-available/nextcloud_ssl_domain_self_signed.conf"
 HTTP_CONF="/etc/apache2/sites-available/nextcloud_http_domain_self_signed.conf"
 HTTP2_CONF="/etc/apache2/mods-available/http2.conf"
-# Nextcloud versao
+# Versao Nextcloud
 [ ! -z "$NC_UPDATE" ] && CURRENTVERSION=$(sudo -u www-data php $NCPATH/occ status | grep "versionstring" | awk '{print $3}')
 NCVERSION=$(curl -s -m 900 $NCREPO/ | sed --silent 's/.*href="nextcloud-\([^"]\+\).zip.asc".*/\1/p' | sort --version-sort | tail -1)
 STABLEVERSION="nextcloud-$NCVERSION"
@@ -135,11 +135,11 @@ APACHE2=/etc/apache2/apache2.conf
 # Se o script estiver sendo executado como root?
 #
 # Examplo:
-# if is_root
-# then
-#     # do stuff
-# else
-#     echo "You are not root..."
+# se for root
+# entao
+#     # faz as alteracoes
+# se nao
+#     echo "voce nao e root..."
 #     exit 1
 # fi
 #
@@ -225,21 +225,21 @@ fi
 
 # Instala caso nao esteja instalado
 install_if_not () {
-if [[ "$(is_this_installed "${1}")" != "${1} instalado, ele deve ser um servidor limpo." ]]
+if [[ "$(is_this_installed "${1}")" != "${1} instalado, o mesmo deve ser um servidor limpo." ]]
 then
     apt update -q4 & spinner_loading && apt install "${1}" -y
 fi
 }
 
 # Testa o tamanho da memoria RAM
-# Chame assim: ram_check [amount of min RAM in GB] [for which program]
+# Chame assim: ram_check [Quantidade de RAM minima em GB] [para o programa]
 # Examplo: Teste RAM 2 Nextcloud
 ram_check() {
 mem_available="$(awk '/MemTotal/{print $2}' /proc/meminfo)"
 if [ "${mem_available}" -lt "$((${1}*1002400))" ]
 then
     printf "${Red}Error: ${1} necessario uma RAM de para instalar ${2}!${Color_Off}\n" >&2
-    printf "${Red}RAM atual é: ("$((mem_available/1002400))" GB)${Color_Off}\n" >&2
+    printf "${Red}RAM atual e: ("$((mem_available/1002400))" GB)${Color_Off}\n" >&2
     sleep 3
     exit 1
 else
@@ -248,8 +248,8 @@ fi
 }
 
 # Testa o numero de CPU
-# Chame assim: cpu_check [amount of min CPU] [for which program]
-# Examplo: checa cpu 2 Nextcloud
+# Chame assim: cpu_check [Quantidade de CPU minima] [para o programa]
+# Examplo: Teste cpu 2 Nextcloud
 cpu_check() {
 nr_cpu="$(nproc)"
 if [ "${nr_cpu}" -lt "${1}" ]
@@ -266,7 +266,7 @@ fi
 check_command() {
   if ! eval "$*"
   then
-     printf "${IRed}Desculpe, mas algo deu errado. Informe esta questão para $ISSUES E incluir a saída da mensagem de erro. Obrigado!${Color_Off}\n"
+     printf "${IRed}Desculpe, mas algo deu errado. Informe esta questao para $ISSUES E incluir a saída da mensagem de erro. Obrigado!${Color_Off}\n"
      echo "$* failed"
     exit 1
   fi
