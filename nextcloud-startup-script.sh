@@ -83,7 +83,7 @@ echo "Recomendamos que voce mude os repositorios com base em onde esta instalado
 echo "Verificando Repositorios..."
 printf "O seu repositorio de servidor atual e:  ${Cyan}$REPO${Color_Off}\n"
 
-if [[ "no" == $(ask_yes_or_no "Do you want to try to find a better mirror?") ]]
+if [[ "no" == $(ask_yes_or_no "Voce quer tentar encontrar um repositorio melhor?") ]]
 then
     echo "Guardando $REPO como repositorio..."
     sleep 1
@@ -153,7 +153,7 @@ echo "|                                                                    |"
 echo "|   O script demorara cerca de 10 minutos para terminar,                 |"
 echo "|   Dependendo da sua conexao com a internet.                           |"
 echo "|                                                                    |"
-echo "| ####################### Tech and Me - 2017 ####################### |"
+echo "| ####################### Pablo Almeida - 2017 ####################### |"
 echo "+--------------------------------------------------------------------+"
 any_key "Pressione qualquer tecla para iniciar o script..."
 clear
@@ -453,6 +453,6 @@ fi
 sed -i "s|precedence ::ffff:0:0/96  100|#precedence ::ffff:0:0/96  100|g" /etc/gai.conf
 
 # Reboot
-any_key "Installation finished, press any key to reboot system..."
+any_key "Instalacao concluida, pressione qualquer tecla para reiniciar o sistema..."
 rm -f "$SCRIPTS/nextcloud-startup-script.sh"
 reboot
