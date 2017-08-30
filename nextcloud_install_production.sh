@@ -1,490 +1,516 @@
 #!/bin/bash
 
-# Pablo Almeida © - 2017
+# Pablo Almeida - 2017
 
-# Prefira o IPv4
-Sed -i " s | #precedence :: ffff: 0: 0/96 100 | precedência :: ffff: 0: 0/96 100 | g " /etc/gai.conf
+# Prefere IPv4
+sed -i "s|#precedence ::ffff:0:0/96  100|precedence ::ffff:0:0/96  100|g" /etc/gai.conf
 
-# Shellcheck disable = 2034,2059
-verdade
-# Shellcheck source = lib.sh
-FIRST_IFACE = 1 && CHECK_CURRENT_REPO = 1 .  <( Curl -sL https://raw.githubusercontent.com/nextcloud/vm/master/lib.sh )
+# shellcheck disable=2034,2059
+true
+# shellcheck source=lib.sh
+FIRST_IFACE=1 && CHECK_CURRENT_REPO=1 . <(curl -sL https://raw.githubusercontent.com/almeida-pf/nextcloud/master/Lib.sh)
 unset FIRST_IFACE
 unset CHECK_CURRENT_REPO
 
-# Verifique se há erros + código de depuração e aborta se algo não estiver certo
+# Verifique se ha erros no codigo e aborta se algo nao estiver correto
 # 1 = ON
-# 0 = DESLIGADO
-DEBUG = 0
-modo de depuração
+# 0 = OFF
+DEBUG=0
+debug_mode
 
-# Verifique se a raiz
-Se  ! Is_root
-então
-    Printf  " \ n $ {Red} Desculpe, você não é root. \ N $ {Color_Off} Você deve digitar: $ {Cyan} sudo $ {Color_Off} bash% s / nextcloud_install_production.sh \ n "  " $ SCRIPTS "
-    Saída 1
-Fi
+# Verifica se e root
+if ! is_root
+then
+    printf "\n${Red}Desculpe, voce nao e root.\n${Color_Off}Voce deve digitar: ${Cyan}sudo ${Color_Off}bash %s/nextcloud_install_production.sh\n" "$SCRIPTS"
+    exit 1
+fi
 
-# Teste tamanho da RAM (2 GB min) + CPUs (min 1)
-Ram_check 2 Nextcloud
-Cpu_check 1 Nextcloud
+# Verifica tamanho da RAM (2GB min) + CPUs (min 1)
+ram_check 2 Nextcloud
+cpu_check 1 Nextcloud
 
-# Mostrar usuário atual
-eco
-Echo  " O usuário atual com permissões sudo é: $ UNIXUSER " .
-Echo  " Este script configurará tudo com esse usuário " .
-Echo  " Se o campo após ':' estiver em branco, você provavelmente estará executando como um usuário root puro. "
-Echo  " É possível instalar com root, mas haverá pequenos erros " .
-eco
-Echo  " Crie um usuário com permissões sudo se desejar uma instalação ideal " .
-Run_static_script adduser
+# Mostra usuario atual
+echo
+echo "Usuario atual com permissoes de sudo e: $UNIXUSER".
+echo "Este script configurara tudo com este usuario."
+echo "Se o campo apos ':' Esta em branco, voce provavelmente esta executando como um usuario root."
+echo "E possivel instalar com root, mas havera erros menores."
+echo
+echo "Crie um usuario com permissoes sudo se desejar uma instalacao correta."
+run_static_script adduser
 
-# Verifique a versão do Ubuntu
-Echo  " Verificando o sistema operacional do servidor e a versão ... "
-Se [ " $ OS "  ! = 1]
-então
-    Echo  "O servidor Ubuntu é necessário para executar este script. "
-    Echo  " Instale essa distro e tente novamente. "
-    Saída 1
-Fi
+# Verifica versao do ubuntu
+echo "Verificando sistema e a versao do servidor..."
+if [ "$OS" != 1 ]
+then
+    echo "Servidor Ubuntu e necessario para executar este script."
+    echo "Instale a distro e tente novamente."
+    exit 1
+fi
 
-Se  ! Versão 16.04 " $ DISTRO " 16.04.4 ;  então
-    Echo  " Versão Ubuntu $ DISTRO deve estar entre 16.04 - 16.04.4 "
-    Saída
-Fi
+if ! version 16.04 "$DISTRO" 16.04.4; then
+    echo "Versao Ubuntu $DISTRO Deve estar entre 16.04 - 16.04.4"
+    exit
+fi
 
-# Verifique se a chave está disponível
-Se  ! Wget -q -T 10 -t 2 " $ NCREPO "  > / dev / null
-então
-    Echo  " Nextcloud repo não está disponível, saindo ... "
-    Saída 1
-Fi
+# Verifique se a chave esta disponivel
+if ! wget -q -T 10 -t 2 "$NCREPO" > /dev/null
+then
+    echo "Nextcloud O repo nao esta disponivel, saindo..."
+    exit 1
+fi
 
-# Verifique se é um servidor limpo
-Is_this_installed postgresql
-Is_this_installed apache2
-Is_this_installed php
-Is_this_installed mysql-common
-Is_this_installed mariadb-server
+# Verifique se e um servidor limpo
+is_this_installed postgresql
+is_this_installed apache2
+is_this_installed php
+is_this_installed mysql-common
+is_this_installed mariadb-server
 
-# Crie $ SCRIPTS dir
-Se [ !  -d  " $ SCRIPTS " ]
-então
-    Mkdir -p " $ SCRIPTS "
-Fi
+# Crie $SCRIPTS dir
+if [ ! -d "$SCRIPTS" ]
+then
+    mkdir -p "$SCRIPTS"
+fi
 
-# Alterar DNS
-Se  ! [ -x  " $ ( comando -v resolvconf ) " ]
-então
-    Instalar resolvconf -y -q
-    Dpkg-reconfigure resolvconf
-Fi
-Echo  " nameserver 8.8.8.8 "  > /etc/resolvconf/resolv.conf.d/base
-Echo  " nameserver 8.8.4.4 "  >> /etc/resolvconf/resolv.conf.d/base
+# Mude DNS
+if ! [ -x "$(command -v resolvconf)" ]
+then
+    apt install resolvconf -y -q
+    dpkg-reconfigure resolvconf
+fi
+echo "nameserver 8.8.8.8" > /etc/resolvconf/resolv.conf.d/base
+echo "nameserver 8.8.4.4" >> /etc/resolvconf/resolv.conf.d/base
 
-# Verificar rede
-Se  ! [ -x  " $ ( comando -v nslookup ) " ]
-então
-    Instale dnsutils -y -q
-Fi
-Se  ! [ -x  " $ ( comando -v ifup ) " ]
-então
-    Apt install ifupdown -y -q
-Fi
-Sudo ifdown " $ IFACE "  && sudo ifup " $ IFACE "
-Se  ! Nslookup google.com
-então
-    Echo  " Network NOT OK. Você deve ter uma conexão de rede em funcionamento para executar este script. "
-    Saída 1
-Fi
+# Verifica Rede
+if ! [ -x "$(command -v nslookup)" ]
+then
+    apt install dnsutils -y -q
+fi
+if ! [ -x "$(command -v ifup)" ]
+then
+    apt install ifupdown -y -q
+fi
+sudo ifdown "$IFACE" && sudo ifup "$IFACE"
+if ! nslookup google.com
+then
+    echo "Rede NAO esta OK. Voce deve ter uma conexao de rede em funcionamento para executar este script."
+    exit 1
+fi
 
-# Definir locais
-Instalar o idioma-pack-en-base -y
-Sudo locale-gen " sv_SE.UTF-8 "  && sudo dpkg-reconfigure --frontend = ambientes não interativos
+# Define locais
+apt install language-pack-en-base -y
+sudo locale-gen "sv_SE.UTF-8" && sudo dpkg-reconfigure --frontend=noninteractive locales
 
-# Verifique onde estão os melhores espelhos e atualize
-eco
-Printf  " Seu repositório de servidor atual é:   $ {Ciano} % s $ {Color_Off} \ n "  " $ REPO "
-Se [[ " não "  ==  $ ( ask_yes_or_no " Deseja tentar encontrar um espelho melhor? " ) ]]
-então
-    Echo  " Mantendo $ REPO como espelho ... "
-    Dormir 1
-outro
-   Echo  " Localizando os melhores espelhos ... "
-   Atualização do apt -q4 & spinner_loading
-   Instale o python-pip -y
-   Pip install \
-       - atualização pip \
-       Apt-select
-    Apt-select -m up-to-date -t ​​5 -c
-    Sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup && \
-    Se [ -f sources.list]
-    então
-        Sudo mv sources.list / etc / apt /
-    Fi
-Fi
-Claro
+# Verifique onde estao os melhores repositorios e atualize
+echo
+printf "O seu repositorio de servidor atual e:  ${Cyan}%s${Color_Off}\n" "$REPO"
+if [[ "no" == $(ask_yes_or_no "Voce quer tentar encontrar um repositorio melhor?") ]]
+then
+    echo "Guardando $REPO Como repositorio..."
+    sleep 1
+else
+   echo "Localizando os melhores repositorios..."
+   apt update -q4 & spinner_loading
+   apt install python-pip -y
+   pip install \
+       --upgrade pip \
+       apt-select
+    apt-select -m up-to-date -t 5 -c
+    sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup && \
+    if [ -f sources.list ]
+    then
+        sudo mv sources.list /etc/apt/
+    fi
+fi
+clear
 
-# Configura o layout do teclado
-Echo  " O layout atual do teclado é $ ( localectl status | grep " Layout "  | awk ' {print $ 3} ' ) "
-Se [[ " não "  ==  $ ( ask_yes_or_no " Deseja alterar o layout do teclado? " ) ]]
-então
-    Echo  " Não mudando o layout do teclado ... "
-    Dormir 1
-    Claro
-outro
-    Dpkg-reconfigure a configuração do teclado
-    Claro
-Fi
+# Define o layout do teclado
+echo "O layout atual do teclado e $(localectl status | grep "Layout" | awk '{print $3}')"
+if [[ "no" == $(ask_yes_or_no "Voce deseja alterar o layout do teclado??") ]]
+then
+    echo "Nao alterando o layout do teclado..."
+    sleep 1
+    clear
+else
+    dpkg-reconfigure keyboard-configuration
+    clear
+fi
 
-# Sistema de atualização
-Atualização do apt -q4 & spinner_loading
+# Atualiza Sistema
+apt update -q4 & spinner_loading
 
-# Escreva MARIADB passe para arquivo e mantenha-o seguro
+# Escreve MARIADB e senha para o arquivo e mantenha-o seguro
 {
-Echo  " [cliente] "
-Echo  " senha = ' $ MARIADB_PASS ' "
-} >  " $ MYCNF "
-Chmod 0600 $ MYCNF
-Raiz chown: root $ MYCNF
+echo "[client]"
+echo "password='$MARIADB_PASS'"
+} > "$MYCNF"
+chmod 0600 $MYCNF
+chown root:root $MYCNF
 
-# Instale o MARIADB
-Instalar software-propriedades-comum -y
-Sudo apt-key adv --recv-keys --keyserver hkp: //keyserver.ubuntu.com: 80 0xF1656F24C74CD1D8
-Sudo add-apt-repository ' deb [arch = amd64, i386, ppc64el] http://ftp.ddg.lth.se/mariadb/repo/10.2/ubuntu xenial main '
-Sudo debconf-set-selections <<<  " mariadb-server-10.2 mysql-server / root_password password $ MARIADB_PASS "
-Sudo debconf-set-selections <<<  " mariadb-server-10.2 mysql-server / root_password_again password $ MARIADB_PASS "
-Atualização do apt -q4 & spinner_loading
-Check_command apt install mariadb-server-10.2 -y
+# Instala MARIADB
+apt install software-properties-common -y
+sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8
+sudo add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://ftp.ddg.lth.se/mariadb/repo/10.2/ubuntu xenial main'
+sudo debconf-set-selections <<< "mariadb-server-10.2 mysql-server/root_password password $MARIADB_PASS"
+sudo debconf-set-selections <<< "mariadb-server-10.2 mysql-server/root_password_again password $MARIADB_PASS"
+apt update -q4 & spinner_loading
+check_command apt install mariadb-server-10.2 -y
 
-# Prepare-se para instalação Nextcloud
-# Https://blog.v-gar.de/2017/02/en-solved-error-1698-28000-in-mysqlmariadb/
-Mysql -u root mysql -p " $ MARIADB_PASS " -e " UPDATE usuário SET plugin = '' WHERE usuário = 'root'; "
-Mysql -u root mysql -p " $ MARIADB_PASS " -e " UPDATE usuário SET senha = PASSWORD (' $ MARIADB_PASS ') WHERE usuário = 'root'; "
-Mysql -u root -p " $ MARIADB_PASS " -e " privilégios de descarga; "
+# Prepare-se para a instalacao Nextcloud
+# https://blog.v-gar.de/2017/02/en-solved-error-1698-28000-in-mysqlmariadb/
+mysql -u root mysql -p"$MARIADB_PASS" -e "UPDATE user SET plugin='' WHERE user='root';"
+mysql -u root mysql -p"$MARIADB_PASS" -e "UPDATE user SET password=PASSWORD('$MARIADB_PASS') WHERE user='root';"
+mysql -u root -p"$MARIADB_PASS" -e "flush privileges;"
 
-# Mysql_secure_installation
-Apt -y instalar esperar
-SECURE_MYSQL = $ ( espera -c "
-Definir tempo limite 10
-Spawn mysql_secure_installation
-Espera \ " Digite a senha atual para a raiz (insira para nenhum): \"
-Envie \ " $ MARIADB_PASS \ r \"
-Esperar \ " Alterar a senha de root? \"
-Envie \ " n \ r \"
-Esperar \ " Remover usuários anônimos? \"
-Envie \ " y \ r \"
-Esperar \ " Não permitir o login root remotamente? \"
-Envie \ " y \ r \"
-Esperar \ " Remover o banco de dados de teste e acessá-lo? \"
-Envie \ " y \ r \"
-Esperar \ " Atualizar tabelas de privilégios agora? \"
-Envie \ " y \ r \"
-Espera eof
-" )
-Echo  " $ SECURE_MYSQL "
-Apto-limpar espera
+# mysql_secure_installation
+apt -y install expect
+SECURE_MYSQL=$(expect -c "
+set timeout 10
+spawn mysql_secure_installation
+expect \"Enter current password for root (enter for none):\"
+send \"$MARIADB_PASS\r\"
+expect \"Change the root password?\"
+send \"n\r\"
+expect \"Remove anonymous users?\"
+send \"y\r\"
+expect \"Disallow root login remotely?\"
+send \"y\r\"
+expect \"Remove test database and access to it?\"
+send \"y\r\"
+expect \"Reload privilege tables now?\"
+send \"y\r\"
+expect eof
+")
+echo "$SECURE_MYSQL"
+apt -y purge expect
 
-# Escreva uma nova configuração MariaDB
-Run_static_script new_etc_mycnf
+# Escreve um novo MariaDB config
+run_static_script new_etc_mycnf
 
 # Instala Apache
-Check_command apt install apache2 -y
-A2enmod reescrever \
-        Cabeçalhos \
-        Env \
-        Dir \
-        Mime \
-        Ssl \
-        Setenvif
+check_command apt install apache2 -y
+a2enmod rewrite \
+        headers \
+        env \
+        dir \
+        mime \
+        ssl \
+        setenvif
 
-# Instale o PHP 7.0
-Atualização do apt -q4 & spinner_loading
-Check_command apt install -y \
-    Libapache2-mod-php7.0 \
-    Php7.0-common \
-    Php7.0-mysql \
-    Php7.0-intl \
-    Php7.0-mcrypt \
-    Php7.0-ldap \
-    Php7.0-imap \
-    Php7.0-cli \
-    Php7.0-gd \
-    Php7.0-pgsql \
-    Php7.0-json \
-    Php7.0-sqlite3 \
-    Php7.0-curl \
-    Php7.0-xml \
-    Php7.0-zip \
-    Php7.0-mbstring \
-    Php-smbclient
+# Instala PHP 7.0
+apt update -q4 & spinner_loading
+check_command apt install -y \
+    libapache2-mod-php7.0 \
+    php7.0-common \
+    php7.0-mysql \
+    php7.0-intl \
+    php7.0-mcrypt \
+    php7.0-ldap \
+    php7.0-imap \
+    php7.0-cli \
+    php7.0-gd \
+    php7.0-pgsql \
+    php7.0-json \
+    php7.0-sqlite3 \
+    php7.0-curl \
+    php7.0-xml \
+    php7.0-zip \
+    php7.0-mbstring \
+    php-smbclient
 
-# Habilitar o cliente SMB
-# Echo '# Isto permite php-smbclient' >> /etc/php/7.0/apache2/php.ini
-# Echo 'extension = "smbclient.so"' >> /etc/php/7.0/apache2/php.ini
+# Habilita SMB client
+# echo '# Isto Habilita php-smbclient' >> /etc/php/7.0/apache2/php.ini
+# echo 'extension="smbclient.so"' >> /etc/php/7.0/apache2/php.ini
 
-# Instalar VM-tools
-Instalar ferramentas open-vm -y
+# Instala VM-tools
+apt install open-vm-tools -y
 
-# Faça o download e valide o pacote Nextcloud
-Check_command download_verify_nextcloud_stable
+# Baixa E valida o pacote Nextcloud
+check_command download_verify_nextcloud_stable
 
-Se [ !  -f  " $ HTML / $ STABLEVERSION .tar.bz2 " ]
-então
-    Echo  " Abortando, algo deu errado com o download de $ STABLEVERSION .tar.bz2 "
-    Saída 1
-Fi
+if [ ! -f "$HTML/$STABLEVERSION.tar.bz2" ]
+then
+    echo "Abortando, algo deu errado com o download de $STABLEVERSION.tar.bz2"
+    exit 1
+fi
 
-# Pacote de extrair
-Tar -xjf " $ HTML / $ STABLEVERSION .tar.bz2 " -C " $ HTML "  & spinner_loading
-rm " $ HTML / $ STABLEVERSION .tar.bz2 "
+# Extrai o Pacote
+tar -xjf "$HTML/$STABLEVERSION.tar.bz2" -C "$HTML" & spinner_loading
+rm "$HTML/$STABLEVERSION.tar.bz2"
 
-# Permissões seguras
-Download_static_script setup_secure_permissions_nextcloud
-festa $ SEGURO  & spinner_loading
+# Permissoes seguras
+download_static_script setup_secure_permissions_nextcloud
+bash $SECURE & spinner_loading
 
-# Criar banco de dados nextcloud_db
-Mysql -u root -p " $ MARIADB_PASS " -e " CRIAR A BASE DE DADOS SE NÃO EXISTA nextcloud_db; "
+# Cria Banco de Dados nextcloud_db
+mysql -u root -p"$MARIADB_PASS" -e "CREATE DATABASE IF NOT EXISTS nextcloud_db;"
 
-# Instale Nextcloud
-Cd  " $ NCPATH "
-Check_command sudo -u www-data php occ manutenção: install \
-    --data-dir " $ NCDATA " \
-    --database " mysql " \
-    --database-name " nextcloud_db " \
-    --database-user " root " \
-    --database-pass " $ MARIADB_PASS " \
-    --admin-user " $ NCUSER " \
-    --admin-pass " $ NCPASS "
-eco
-Echo  " Nextcloud versão: "
-Sudo -u www-data php " $ NCPATH " / status occ
-Durma 3
-eco
+# Instala Nextcloud
+cd "$NCPATH"
+check_command sudo -u www-data php occ maintenance:install \
+    --data-dir "$NCDATA" \
+    --database "mysql" \
+    --database-name "nextcloud_db" \
+    --database-user "root" \
+    --database-pass "$MARIADB_PASS" \
+    --admin-user "$NCUSER" \
+    --admin-pass "$NCPASS"
+echo
+echo "Nextcloud version:"
+sudo -u www-data php "$NCPATH"/occ status
+sleep 3
+echo
 
-# Habilitar UTF8mb4 (suporte de 4 bytes)
-Bases de dados = $ ( mysql -u root -p " $ MARIADB_PASS " -e " SHOW DATABASES; "  | tr -d " | "  | grep -v Database )
-Para  db  em  $ bases de dados ;  Faz
-    Se [[ " $ db "  ! =  " Performance_schema " ]] && [[ " $ db "  ! = _ * ]] && [[ " $ db "  ! =  " Information_schema " ]] ;
-    então
-        Echo  " Alterando para UTF8mb4 em: $ db "
-Mysql         -u root -p " $ MARIADB_PASS " -e " ALTER DATABASE $ db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; "
-    Fi
-feito
-# Se [$? -ne 0]
-# Então
-#     Echo "UTF8mb4 não foi configurado. Algo está errado".
-#     Echo "Por favor, informe esse erro em $ QUESTÕES. Obrigado!"
-#     Saída 1
-# Fi
+# Habilita UTF8mb4 (4-byte support)
+databases=$(mysql -u root -p"$MARIADB_PASS" -e "SHOW DATABASES;" | tr -d "| " | grep -v Database)
+for db in $databases; do
+    if [[ "$db" != "performance_schema" ]] && [[ "$db" != _* ]] && [[ "$db" != "information_schema" ]];
+    then
+        echo "Mudando para UTF8mb4 on: $db"
+        mysql -u root -p"$MARIADB_PASS" -e "ALTER DATABASE $db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    fi
+done
+#if [ $? -ne 0 ]
+#then
+#    echo "UTF8mb4 Nao foi definido. Algo esta errado."
+#    echo "Informe este erro para $ISSUES. Obrigado!"
+#    exit 1
+#fi
 
-# Reparar e definir valores de configuração Nextcloud
-Mysqlcheck -u root -p " $ MARIADB_PASS " --auto -repair --optimize --all-databases
-Check_command sudo -u www-data $ NCPATH / occ config: system: set mysql.utf8mb4 --ty boolean --value = " true "
-Check_command sudo -u www-data $ NCPATH / occ manutenção: reparo
+# Repara e defini valores de configuracao Nextcloud
+mysqlcheck -u root -p"$MARIADB_PASS" --auto-repair --optimize --all-databases
+check_command sudo -u www-data $NCPATH/occ config:system:set mysql.utf8mb4 --type boolean --value="true"
+check_command sudo -u www-data $NCPATH/occ maintenance:repair
 
-# Prepare cron.php para ser executado a cada 15 minutos
-Crontab -u www-data -l | {Gato ;  Echo  " * / 15 * * * * php -f $ NCPATH /cron.php> / dev / null 2> & 1 " ; } | Crontab -u www-data -
+# Prepare o cron.php para ser executado a cada 15 minutos
+crontab -u www-data -l | { cat; echo "*/15  *  *  *  * php -f $NCPATH/cron.php > /dev/null 2>&1"; } | crontab -u www-data -
 
-# Alterar valores em php.ini (aumentar o tamanho máximo do arquivo)
-# Max_execution_time
-Sed -i " s | max_execution_time =. * | Max_execution_time = 3500 | g " /etc/php/7.0/apache2/php.ini
-# Max_input_time
-Sed -i " s | max_input_time =. * | Max_input_time = 3600 | g " /etc/php/7.0/apache2/php.ini
-# Memory_limit
-Sed -i " s | memory_limit =. * | Memory_limit = 512M | g " /etc/php/7.0/apache2/php.ini
-# Post_max
-Sed -i " s | post_max_size =. * | Post_max_size = 1100M | g " /etc/php/7.0/apache2/php.ini
-# Upload_max
-Sed -i " s | upload_max_filesize =. * | Upload_max_filesize = 1000M | g " /etc/php/7.0/apache2/php.ini
+# Altera valores em php.ini (Aumenta o tamanho maximo do arquivo)
+# max_execution_time
+sed -i "s|max_execution_time =.*|max_execution_time = 3500|g" /etc/php/7.0/apache2/php.ini
+# max_input_time
+sed -i "s|max_input_time =.*|max_input_time = 3600|g" /etc/php/7.0/apache2/php.ini
+# memory_limit
+sed -i "s|memory_limit =.*|memory_limit = 512M|g" /etc/php/7.0/apache2/php.ini
+# post_max
+sed -i "s|post_max_size =.*|post_max_size = 1100M|g" /etc/php/7.0/apache2/php.ini
+# upload_max
+sed -i "s|upload_max_filesize =.*|upload_max_filesize = 1000M|g" /etc/php/7.0/apache2/php.ini
 
-# Defina o carregamento máximo em Nextcloud .htaccess
-Configure_max_upload
+# Defina o upload maximo no Nextcloud .htaccess
+configure_max_upload
 
-# Defina o correio SMTP
-Sudo -u www-data php " $ NCPATH " / occ config: system: set mail_smtpmode --value = " smtp "
+# Define SMTP mail
+sudo -u www-data php "$NCPATH"/occ config:system:set mail_smtpmode --value="smtp"
 
-# Definir logrotate
-Sudo -u www-data php " $ NCPATH " / occ config: system: set log_rotate_size --value = " 10485760 "
+# Define logrotate
+sudo -u www-data php "$NCPATH"/occ config:system:set log_rotate_size --value="10485760"
 
-# Habilite o OPCache para PHP
-# Https://docs.nextcloud.com/server/12/admin_manual/configuration_server/server_tuning.html#enable-php-opcache
-Phpenmod opcache
+# Habilita OPCache para PHP 
+# https://docs.nextcloud.com/server/12/admin_manual/configuration_server/server_tuning.html#enable-php-opcache
+phpenmod opcache
 {
-Echo  " # configurações de OPcache para Nextcloud "
-Echo  " opcache.enable = 1 "
-Echo  " opcache.enable_cli = 1 "
-Echo  " opcache.interned_strings_buffer = 8 "
-Echo  " opcache.max_accelerated_files = 10000 "
-Echo  " opcache.memory_consumption = 128 "
-Echo  " opcache.save_comments = 1 "
-Echo  " opcache.revalidate_freq = 1 "
-Echo  " opcache.validate_timestamps = 1 "
+echo "# OPcache settings for Nextcloud"
+echo "opcache.enable=1"
+echo "opcache.enable_cli=1"
+echo "opcache.interned_strings_buffer=8"
+echo "opcache.max_accelerated_files=10000"
+echo "opcache.memory_consumption=128"
+echo "opcache.save_comments=1"
+echo "opcache.revalidate_freq=1"
+echo "opcache.validate_timestamps=1"
 } >> /etc/php/7.0/apache2/php.ini
 
-# Instalar o gerador de visualização
-Run_app_script previewgenerator
+# Instala o gerador de visualizacao
+run_app_script previewgenerator
 
-# Instalar Figlet
-Instalar uma figura
+# Instala Figlet
+apt install figlet -y
 
-# Gerar $ HTTP_CONF
-Se [ !  -f  $ HTTP_CONF ]
-então
-    Toque " $ HTTP_CONF "
-    Gato << HTTP_CREATE >  " $ HTTP_CONF "
-< VirtualHost * : 80>
+# Gera $HTTP_CONF
+if [ ! -f $HTTP_CONF ]
+then
+    touch "$HTTP_CONF"
+    cat << HTTP_CREATE > "$HTTP_CONF"
+<VirtualHost *:80>
 
-# ## SEU ENDEREÇO ​​DO SERVIDOR ###
-#     ServerAdmin admin@example.com
-#     ServerName example.com
-#     ServerAlias ​​subdomain.example.com
+### ENDERECO DO SEU SERVIDOR ###
+#    ServerAdmin admin@example.com
+#    ServerName example.com
+#    ServerAlias subdomain.example.com
 
-# ## AJUSTES ###
-    DocumentRoot $ NCPATH
+### Configuracoes ###
+    DocumentRoot $NCPATH
 
-    < Directory $ NCPATH >
-    Índices de Opções FollowSymLinks
+    <Directory $NCPATH>
+    Options Indexes FollowSymLinks
     AllowOverride All
-    Exigir tudo concedido
-    Satisfaça Qualquer
-    < / Directory >
+    Require all granted
+    Satisfy Any
+    </Directory>
 
-    < IfModule mod_dav.c >
-    Derrubar
-    < / IfModule >
+    <IfModule mod_dav.c>
+    Dav off
+    </IfModule>
 
-    < Diretório " $ NCDATA " >
-    # Apenas no caso de .htaccess ficar desabilitado
-    Exigir todos negados
-    < / Directory >
+    <Directory "$NCDATA">
+    # just in case if .htaccess gets disabled
+    Require all denied
+    </Directory>
 
-    SetEnv HOME $ NCPATH
-    SetEnv HTTP_HOME $ NCPATH
+    SetEnv HOME $NCPATH
+    SetEnv HTTP_HOME $NCPATH
 
-< / VirtualHost >
+</VirtualHost>
 HTTP_CREATE
-    Echo  " $ HTTP_CONF foi criado com sucesso "
-Fi
+    echo "$HTTP_CONF was successfully created"
+fi
 
-# Gerar $ SSL_CONF
-Se [ !  -f  $ SSL_CONF ]
-então
-    Toque " $ SSL_CONF "
-    Gato << SSL_CREATE >  " $ SSL_CONF "
-< VirtualHost * : 443>
-    Cabeçalho adicionar Strict-Transport-Security: " max-age = 15768000; includeSubdomains "
+# Gera $SSL_CONF
+if [ ! -f $SSL_CONF ]
+then
+    touch "$SSL_CONF"
+    cat << SSL_CREATE > "$SSL_CONF"
+<VirtualHost *:443>
+    Header add Strict-Transport-Security: "max-age=15768000;includeSubdomains"
     SSLEngine on
 
-# ## SEU ENDEREÇO ​​DO SERVIDOR ###
-#     ServerAdmin admin@example.com
-#     ServerName example.com
-#     ServerAlias ​​subdomain.example.com
+### ENDERECO DO SEU SERVIDOR ###
+#    ServerAdmin admin@example.com
+#    ServerName example.com
+#    ServerAlias subdomain.example.com
 
-# ## AJUSTES ###
-    DocumentRoot $ NCPATH
+### Configuracoes ###
+    DocumentRoot $NCPATH
 
-    < Directory $ NCPATH >
-    Índices de Opções FollowSymLinks
+    <Directory $NCPATH>
+    Options Indexes FollowSymLinks
     AllowOverride All
-    Exigir tudo concedido
-    Satisfaça Qualquer
-    < / Directory >
+    Require all granted
+    Satisfy Any
+    </Directory>
 
-    < IfModule mod_dav.c >
-    Derrubar
-    < / IfModule >
+    <IfModule mod_dav.c>
+    Dav off
+    </IfModule>
 
-    < Diretório " $ NCDATA " >
-    # Apenas no caso de .htaccess ficar desabilitado
-    Exigir todos negados
-    < / Directory >
+    <Directory "$NCDATA">
+    # just in case if .htaccess gets disabled
+    Require all denied
+    </Directory>
 
-    SetEnv HOME $ NCPATH
-    SetEnv HTTP_HOME $ NCPATH
+    SetEnv HOME $NCPATH
+    SetEnv HTTP_HOME $NCPATH
 
-# ## LOCALIZAÇÃO DE CERT FILES ###
+### LOCALIZACAO DE ARQUIVOS CERT ###
     SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
     SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
-< / VirtualHost >
+</VirtualHost>
 SSL_CREATE
-    Echo  " $ SSL_CONF foi criado com sucesso "
-Fi
+    echo "$SSL_CONF was successfully created"
+fi
 
-# Habilitar nova configuração
-A2ensite nextcloud_ssl_domain_self_signed.conf
-A2ensite nextcloud_http_domain_self_signed.conf
-A2dissite default-ssl
-Service apache2 reiniciar
+# Habilitando novo config
+a2ensite nextcloud_ssl_domain_self_signed.conf
+a2ensite nextcloud_http_domain_self_signed.conf
+a2dissite default-ssl
 
-Whiptail --title " Quais aplicativos / programas você deseja instalar? " --checklist --separate-output " " 10 40 3 \
-" Calendário "  "               " em \
-" Contatos "  "               " em \
-" Webmin "  "               " em 2> resultados
+# Habilite o servidor HTTP/2 de largura, se o usuario decidir
+echo "Seu repositorio oficial de pacotes nao fornece um pacote Apache2 com modulo HTTP/2 incluido."
+echo "Se voce quiser habilitar o HTTP/2 no entanto, podemos atualizar o seu Apache2 do Ondrejs PPA:"
+echo "https://launchpad.net/~ondrej/+archive/ubuntu/apache2"
+echo "Habilita HTTP/2 pode trazer uma vantagem de desempenho, mas tambem pode ter alguns problemas de compatibilidade."
+echo "E.g. O aplicativo de chamadas de video Nextcloud Spread ainda nao funciona com o HTTP/2 ativado."
+if [[ "yes" == $(ask_yes_or_no "Deseja ativar o sistema HTTP/2?") ]]
+then
+    # Adicionando PPA
+    add-apt-repository ppa:ondrej/apache2 -y
+    apt update -q4 & spinner_loading
+    apt upgrade apache2 -y
+    
+    # Habilitando HTTP/2 modulo & protocolo
+    cat << HTTP2_ENABLE > "$HTTP2_CONF"
+<IfModule http2_module>
+    Protocols h2 h2c http/1.1
+    H2Direct on
+</IfModule>
+HTTP2_ENABLE
+    echo "$HTTP2_CONF Foi criado com sucesso"
+    a2enmod http2
+fi
 
-Enquanto  lê -r -u 9 escolha
-Faz
-    Caso  " $ choice "  em
-        Calendário)
-            Calendário run_app_script
+# Reiniciando Apache2 para habilitar novo config
+service apache2 restart
+
+whiptail --title "Which apps/programs do you want to install?" --checklist --separate-output "" 10 40 3 \
+"Calendar" "              " on \
+"Contacts" "              " on \
+"Webmin" "              " on 2>results
+
+while read -r -u 9 choice
+do
+    case "$choice" in
+        Calendar)
+            run_app_script calendar
         ;;
-        Contatos)
-            Contatos run_app_script
+        Contacts)
+            run_app_script contacts
         ;;
         Webmin)
-            Run_app_script webmin
+            run_app_script webmin
         ;;
-        * )
+        *)
         ;;
-    Esac
-Feito  9 resultados
-Resultados rm -f
+    esac
+done 9< results
+rm -f results
 
-# Obter scripts necessários para o primeiro arranque
-Se [ !  -f  " $ SCRIPTS " /nextcloud-startup-script.sh]
-então
-Check_command wget -q " $ GITHUB_REPO " /nextcloud-startup-script.sh -P " $ SCRIPTS "
-Fi
-Instrução download_static_script
-Histórico do download_static_script
+# Obtenha os scripts necessarios para o primeiro Boot
+if [ ! -f "$SCRIPTS"/nextcloud-startup-script.sh ]
+then
+check_command wget -q "$GITHUB_REPO"/nextcloud-startup-script.sh -P "$SCRIPTS"
+fi
+download_static_script instruction
+download_static_script history
 
-# Faça $ SCRIPTS excutable
-Chmod + x -R " $ SCRIPTS "
-Raiz chown: root -R " $ SCRIPTS "
+# Faca $SCRIPTS executaveis
+chmod +x -R "$SCRIPTS"
+chown root:root -R "$SCRIPTS"
 
-# Prepare o primeiro arranque
-Check_command run_static_script change-ncadmin-profile
-Check_command run_static_script change-root-profile
+# Prepare para o primeiro Boot
+check_command run_static_script change-ncadmin-profile
+check_command run_static_script change-root-profile
 
-# Instalar Redis
-Run_static_script redis-server-ubuntu16
+# Instala Redis
+run_static_script redis-server-ubuntu16
 
-# Upgrade
-Atualização do apt -q4 & spinner_loading
-Apt dist-upgrade -y
+# Atualiza
+apt update -q4 & spinner_loading
+apt dist-upgrade -y
 
-# Remove LXD (sempre aparece como falhou durante a inicialização)
-Apt purge lxd -y
+# Remove LXD (Sempre aparece como falhou durante a inicializacao)
+apt purge lxd -y
 
-# Limpeza
-CLEARBOOT = $ ( dpkg -l linux- *  | awk ' / ^ ii / {print $ 2} '  | grep -v -e ' ' " $ ( uname -r | cut -f1,2 -d " - " ) " ' '  | Grep -e ' [0-9] '  | xargs sudo apt -y purge )
-Echo  " $ CLEARBOOT "
-Autor eletrodo -y
-Apt autoclean
-Encontrar / root " / home / $ UNIXUSER " - tipo f \ ( -name ' * .sh * ' -o -name ' * .html * ' -o -name ' * .tar * ' -o -name ' *. Zip * '  \) -delete
+# Limpa
+CLEARBOOT=$(dpkg -l linux-* | awk '/^ii/{ print $2}' | grep -v -e ''"$(uname -r | cut -f1,2 -d"-")"'' | grep -e '[0-9]' | xargs sudo apt -y purge)
+echo "$CLEARBOOT"
+apt autoremove -y
+apt autoclean
+find /root "/home/$UNIXUSER" -type f \( -name '*.sh*' -o -name '*.html*' -o -name '*.tar*' -o -name '*.zip*' \) -delete
 
-# Instale kernels virtuais para o Hyper-V e extra para o módulo do kernel UTF8 + Collabora e OnlyOffice
+# Instale os kernels virtuais para Hyper-V, E extra para UTF8 Modulo do kernel + Collabora e OnlyOffice
 # Kernel 4.4
-Apt install --install-recommended -y \
-Linux-virtual-lts-xenial \
-Linux-tools-virtual-lts-xenial \
-Linux-cloud-tools-virtual-lts-xenial \
-Linux-image-virtual-lts-xenial \
-Linux-image-extra- " $ ( uname -r ) "
+apt install --install-recommends -y \
+linux-virtual-lts-xenial \
+linux-tools-virtual-lts-xenial \
+linux-cloud-tools-virtual-lts-xenial \
+linux-image-virtual-lts-xenial \
+linux-image-extra-"$(uname -r)"
 
-# Defina as permissões seguras definitivas (./data/.htaccess tem permissões erradas do contrário)
-festa $ SEGURO  & spinner_loading
+# Define finalidades de permissoes seguras (./data/.htaccess has wrong permissions otherwise)
+bash $SECURE & spinner_loading
 
-# Reiniciar
-Echo  " Instalação feita, o sistema reiniciará agora ... "
-Reiniciar
+# Reboot
+echo "Instalaco concluida, o sistema agora sera reiniciado..."
+reboot
