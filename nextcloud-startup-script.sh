@@ -30,7 +30,7 @@ network_ok() {
     fi
 }
 
-# Verifique se e root
+# Verifica se e root
 if ! is_root
 then
     printf "\n${Red}Desculpe, voce nao e root.\n${Color_Off}Voce deve digitar: ${Cyan}sudo ${Color_Off}bash $SCRIPTS/nextcloud-startup-script.sh\n"
@@ -56,7 +56,7 @@ else
     unset CHECK_CURRENT_REPO
 fi
 
-# Verifica se ha erros no code e aborta se algo nao estiver correto
+# Verifica se ha erros no cod e aborta se algo nao estiver correto
 # 1 = ON
 # 0 = OFF
 DEBUG=0
@@ -76,10 +76,10 @@ fi
 is_process_running dpkg
 is_process_running apt
 
-# Verifique onde estao os melhores repositorios e atualize
+# Verifica os melhores repositorios e atualiza
 printf "\nTo Faca downloads o mais rapido possivel ao atualizar, voce deve ter repositorios tao perto quanto possivel.\n"
-echo "Esta VM vem com repositorios com base em servidores em que, quando usado quando a VM foi lancada e empacotada."
-echo "Recomendamos que voce mude os repositorios com base em onde esta instalado atualmente."
+echo "Esta VM vem com repositorios com base em servidores em que, quando usada a VM foi lancada e empacotada."
+echo "Recomendamos que voce mude os repositorios com base onde esta instalando atualmente."
 echo "Verificando Repositorios..."
 printf "O seu repositorio de servidor atual e:  ${Cyan}$REPO${Color_Off}\n"
 
