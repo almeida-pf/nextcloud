@@ -16,7 +16,7 @@ debug_mode
 # Verifica se e ROOT
 if ! is_root
 then
-    printf "\n${Red}Desculpe, voce nao e ROOT.\n${Color_Off}Voce deve digitar: ${Cyan}sudo ${Color_Off}bash $SCRIPTS/collabora.sh\n"
+    printf "\n${Red}Desculpe, Voce nao e ROOT.\n${Color_Off}Voce deve digitar: ${Cyan}sudo ${Color_Off}bash $SCRIPTS/collabora.sh\n"
     exit 1
 fi
 
@@ -27,38 +27,38 @@ cpu_check 2 Collabora
 # Verifica se Onlyoffice esta executando
 if [ -d "$NCPATH"/apps/onlyoffice ]
 then
-    echo "It seems like OnlyOffice is running."
-    echo "You can't run OnlyOffice at the same time as you run Collabora."
+    echo "Parece que OnlyOffice esta executando."
+    echo "Voce nao pode executar OnlyOffice ao mesmo tempo que voce executar Collabora."
     exit 1
 fi
 
-# Notification
-whiptail --msgbox "Please before you start, make sure that port 443 is directly forwarded to this machine!" "$WT_HEIGHT" "$WT_WIDTH"
+# Notificacao
+whiptail --msgbox "Antes de comecar, verifique se a porta 443 e encaminhada diretamente para esta maquina!" "$WT_HEIGHT" "$WT_WIDTH"
 
-# Get the latest packages
+# Atualiza Repositorio
 apt update -q4 & spinner_loading
 
-# Check if Nextcloud is installed
-echo "Checking if Nextcloud is installed..."
+# Verifica se o Nextcloud esta instalado
+echo "verificando se o Nextcloud esta instalado..."
 if ! curl -s https://"${NCDOMAIN//\\/}"/status.php | grep -q 'installed":true'
 then
     echo
-    echo "It seems like Nextcloud is not installed or that you don't use https on:"
+    echo "Parece que Nextcloud nao esta instalado, ou https esteja habilitado:"
     echo "${NCDOMAIN//\\/}."
-    echo "Please install Nextcloud and make sure your domain is reachable, or activate SSL"
-    echo "on your domain to be able to run this script."
+    echo "Instale Nextcloud e certifique-se de que seu dominio esteja acessivel ou ative o SSL"
+    echo "no seu dominio para poder executar este script."
     echo
-    echo "If you use the Nextcloud VM you can use the Let's Encrypt script to get SSL and activate your Nextcloud domain."
-    echo "When SSL is activated, run these commands from your terminal:"
+    echo "Se voce usa a VM Nextcloud, voce pode usar o script Let's Encrypt para obter SSL e ativar o seu dominio Nextcloud."
+    echo "Quando o SSL for ativado, execute esses comandos do seu terminal:"
     echo "sudo wget $APP/collabora.sh"
     echo "sudo bash collabora.sh"
-    any_key "Press any key to continue... "
+    any_key "Pressione qualquer tecla para continuar... "
     exit 1
 fi
 
-# Check if $SUBDOMAIN exists and is reachable
+# Verifica se $SUBDOMAIN existe e esta acessivel
 echo
-echo "Checking if $SUBDOMAIN exists and is reachable..."
+echo "Verificando se $SUBDOMAIN existe e esta acessivel..."
 if wget -q -T 10 -t 2 --spider "$SUBDOMAIN"; then
    sleep 0.1
 elif wget -q -T 10 -t 2 --spider --no-check-certificate "https://$SUBDOMAIN"; then
@@ -68,13 +68,13 @@ elif curl -s -k -m 10 "$SUBDOMAIN"; then
 elif curl -s -k -m 10 "https://$SUBDOMAIN" -o /dev/null; then
    sleep 0.1
 else
-   echo "Nope, it's not there. You have to create $SUBDOMAIN and point"
-   echo "it to this server before you can run this script."
-   any_key "Press any key to continue... "
+   echo "Nao, nao esta acessivel ou nao existe. Voce precisa criar $SUBDOMAIN e apontar"
+   echo "para este servidor antes de poder executar este script."
+   any_key "Pressione qualquer tecla para continuar... "
    exit 1
 fi
 
-# Check to see if user already has nmap installed on their system
+# Verifica se o usuario ja possui o nmap instalado em seu sistema
 if [ "$(dpkg-query -s nmap 2> /dev/null | grep -c "ok installed")" == "1" ]
 then
     NMAPSTATUS=preinstalled
@@ -83,39 +83,39 @@ fi
 apt update -q4 & spinner_loading
 if [ "$NMAPSTATUS" = "preinstalled" ]
 then
-      echo "nmap is already installed..."
+      echo "O nmap ja esta instalado..."
 else
     apt install nmap -y
 fi
 
-# Check if 443 is open using nmap, if not notify the user
+# Verifica se 443 esta aberta usando nmap, se nao notifica o usuario
 if [ "$(nmap -sS -p 443 "$WANIP4" | grep -c "open")" == "1" ]
 then
-  printf "${Green}Port 443 is open on $WANIP4!${Color_Off}\n"
+  printf "${Green}A porta 443 esta aberta em $WANIP4!${Color_Off}\n"
   if [ "$NMAPSTATUS" = "preinstalled" ]
   then
-    echo "nmap was previously installed, not removing"
+    echo "O nmap foi instalado anteriormente, removendo"
   else
     apt remove --purge nmap -y
   fi
 else
-  echo "Port 443 is not open on $WANIP4. We will do a second try on $SUBDOMAIN instead."
-  any_key "Press any key to test $SUBDOMAIN... "
+  echo "Porta 443 esta aberta em $WANIP4. Vamos fazer uma segunda tentativa em $SUBDOMAIN em vez disso."
+  any_key "Pressione qualquer tecla para testar $SUBDOMAIN... "
   if [[ "$(nmap -sS -PN -p 443 "$SUBDOMAIN" | grep -m 1 "open" | awk '{print $2}')" = "open" ]]
   then
-      printf "${Green}Port 443 is open on $SUBDOMAIN!${Color_Off}\n"
+      printf "${Green}Porta 443 esta aberta em $SUBDOMAIN!${Color_Off}\n"
       if [ "$NMAPSTATUS" = "preinstalled" ]
       then
-        echo "nmap was previously installed, not removing"
+        echo "O nmap foi instalado anteriormente, removendo"
       else
         apt remove --purge nmap -y
       fi
   else
-      whiptail --msgbox "Port 443 is not open on $SUBDOMAIN. Please follow this guide to open ports in your router: https://www.techandme.se/open-port-80-443/" "$WT_HEIGHT" "$WT_WIDTH"
-      any_key "Press any key to exit... "
+      whiptail --msgbox "Porta 443 nao esta aberta em $SUBDOMAIN. Siga este guia para abrir portas em seu roteador: https://www.techandme.se/open-port-80-443/" "$WT_HEIGHT" "$WT_WIDTH"
+      any_key "Aperte qualquer tecla para sair... "
       if [ "$NMAPSTATUS" = "preinstalled" ]
       then
-        echo "nmap was previously installed, not removing"
+        echo "o nmap foi instalado anteriormente, removendo"
       else
         apt remove --purge nmap -y
       fi
@@ -123,7 +123,7 @@ else
   fi
 fi
 
-# Install Docker
+# Instalando Docker
 if [ "$(dpkg-query -W -f='${Status}' docker-ce 2>/dev/null | grep -c "ok installed")" == "1" ]
 then
     docker -v
@@ -145,16 +145,16 @@ else
     docker -v
 fi
 
-# Load aufs
+# Carrega aufs
 apt-get install linux-image-extra-"$(uname -r)" -y
-# apt install aufs-tools -y # already included in the docker-ce package
+# apt install aufs-tools -y # ja incluido no pacote docker-ce
 AUFS=$(grep -r "aufs" /etc/modules)
 if ! [ "$AUFS" = "aufs" ]
 then
     echo "aufs" >> /etc/modules
 fi
 
-# Set docker storage driver to AUFS
+# Define o driver de armazenamento docker para AUFS
 AUFS2=$(grep -r "aufs" /etc/default/docker)
 if ! [ "$AUFS2" = 'DOCKER_OPTS="--storage-driver=aufs"' ]
 then
@@ -162,12 +162,12 @@ then
     service docker restart
 fi
 
-# Check of docker runs and kill it
+# Verifica processos do Docker e mata
 DOCKERPS=$(docker ps -a -q)
 if [ "$DOCKERPS" != "" ]
 then
-    echo "Removing old Docker instance(s)... ($DOCKERPS)"
-    any_key "Press any key to continue. Press CTRL+C to abort"
+    echo "Removendo instancias Docker antiga(s)... ($DOCKERPS)"
+    any_key "Pressione qualquer tecla para continuar. ou CTRL+C para Cancelar"
     docker stop "$DOCKERPS"
     docker rm "$DOCKERPS"
 fi
