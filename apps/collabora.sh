@@ -172,27 +172,27 @@ then
     docker rm "$DOCKERPS"
 fi
 
-# Disable RichDocuments (Collabora App) if activated
+# Desativa RichDocuments (Collabora App) se estiver ativado
 if [ -d "$NCPATH"/apps/richdocuments ]
 then
     sudo -u www-data php "$NCPATH"/occ app:disable richdocuments
     rm -r "$NCPATH"/apps/richdocuments
 fi
 
-# Install Collabora docker
+# Instala Collabora Docker
 docker pull collabora/code:latest
 docker run -t -d -p 127.0.0.1:9980:9980 -e "domain=$NCDOMAIN" --restart always --cap-add MKNOD collabora/code
 
-# Install Apache2
+# Instala Apache2
 install_if_not apache2
 
-# Enable Apache2 module's
+# Habilita Apache2 module's
 a2enmod proxy
 a2enmod proxy_wstunnel
 a2enmod proxy_http
 a2enmod ssl
 
-# Create Vhost for Collabora online in Apache2
+# Cria o Vhost para Collabora online no Apache2
 if [ ! -f "$HTTPS_CONF" ];
 then
     cat << HTTPS_CREATE > "$HTTPS_CONF"
@@ -203,7 +203,7 @@ then
   Options -Indexes
   </Directory>
 
-  # SSL configuration, you may want to take the easy route instead and use Lets Encrypt!
+  # Configuracao do SSL, voce pode seguir o caminho mais facil e usar Letsencrypt!
   SSLEngine on
   SSLCertificateChainFile $CERTFILES/$SUBDOMAIN/chain.pem
   SSLCertificateFile $CERTFILES/$SUBDOMAIN/cert.pem
@@ -214,34 +214,34 @@ then
   SSLHonorCipherOrder     on
   SSLCompression off
 
-  # Encoded slashes need to be allowed
+  # Codico slashes precisa ser permitido
   AllowEncodedSlashes NoDecode
 
-  # Container uses a unique non-signed certificate
+  # Container usa um certificado exclusivo nao assinado
   SSLProxyEngine On
   SSLProxyVerify None
   SSLProxyCheckPeerCN Off
   SSLProxyCheckPeerName Off
 
-  # keep the host
+  # Manter o host
   ProxyPreserveHost On
 
-  # static html, js, images, etc. served from loolwsd
-  # loleaflet is the client part of LibreOffice Online
+  # Html, Js, Imagens, etc. Estatico
+  # Parte do cliente do LibreOffice Online
   ProxyPass           /loleaflet https://127.0.0.1:9980/loleaflet retry=0
   ProxyPassReverse    /loleaflet https://127.0.0.1:9980/loleaflet
 
-  # WOPI discovery URL
+  # URL de descoberta WOPI
   ProxyPass           /hosting/discovery https://127.0.0.1:9980/hosting/discovery retry=0
   ProxyPassReverse    /hosting/discovery https://127.0.0.1:9980/hosting/discovery
 
-  # Main websocket
+  # Principal websocket
   ProxyPassMatch "/lool/(.*)/ws$" wss://127.0.0.1:9980/lool/\$1/ws nocanon
 
   # Admin Console websocket
   ProxyPass   /lool/adminws wss://127.0.0.1:9980/lool/adminws
 
-  # Download as, Fullscreen presentation and Image upload operations
+  # Baixe como, apresentacao em tela cheia e operacoes de upload de imagens
   ProxyPass           /lool https://127.0.0.1:9980/lool
   ProxyPassReverse    /lool https://127.0.0.1:9980/lool
 </VirtualHost>
@@ -249,51 +249,51 @@ HTTPS_CREATE
 
     if [ -f "$HTTPS_CONF" ];
     then
-        echo "$HTTPS_CONF was successfully created"
+        echo "$HTTPS_CONF foi criado com sucesso"
         sleep 1
     else
-        echo "Unable to create vhost, exiting..."
-        echo "Please report this issue here $ISSUES"
+        echo "Nao foi possivel criar vhost, sair..."
+        echo "Por favor, relate este problema aqui $ISSUES"
         exit 1
     fi
 fi
 
-# Install certbot (Let's Encrypt)
+# Instala certbot (Let's Encrypt)
 install_certbot
 
-# Generate certs
+# Gera certs
 if le_subdomain
 then
-    # Generate DHparams chifer
+    # Gera DHparams chifer
     if [ ! -f "$DHPARAMS" ]
     then
         openssl dhparam -dsaparam -out "$DHPARAMS" 8192
     fi
     printf "${ICyan}\n"
-    printf "Certs are generated!\n"
+    printf "Certs sao gerados!\n"
     printf "${Color_Off}\n"
     a2ensite "$SUBDOMAIN.conf"
     service apache2 restart
-# Install Collabora App
+# Instala Collabora App
     check_command wget -q "$COLLVER_REPO/$COLLVER/$COLLVER_FILE" -P "$NCPATH/apps"
     check_command tar -zxf "$NCPATH/apps/$COLLVER_FILE" -C "$NCPATH/apps"
     cd "$NCPATH/apps" || exit 1
     rm "$COLLVER_FILE"
 else
-    printf "${ICyan}\nIt seems like no certs were generated, please report this issue here: $ISSUES\n"
+    printf "${ICyan}\nParece que nenhum certificado foi gerado, por favor relate este problema aqui: $ISSUES\n"
     any_key "Press any key to continue... "
     service apache2 restart
 fi
 
-# Enable RichDocuments (Collabora App)
+# Habilita RichDocuments (Collabora App)
 if [ -d "$NCPATH"/apps/richdocuments ]
 then
-# Enable Collabora
+# Habilita Collabora
     check_command sudo -u www-data php "$NCPATH"/occ app:enable richdocuments
     check_command sudo -u www-data "$NCPATH"/occ config:app:set richdocuments wopi_url --value="https://$SUBDOMAIN"
     chown -R www-data:www-data $NCPATH/apps
     check_command sudo -u www-data php "$NCPATH"/occ config:system:set trusted_domains 3 --value="$SUBDOMAIN"
-# Add prune command
+# Adiciona comando prune
     {
     echo "#!/bin/bash"
     echo "docker system prune -a --force"
@@ -301,9 +301,9 @@ then
     } > "$SCRIPTS/dockerprune.sh"
     chmod a+x "$SCRIPTS/dockerprune.sh"
     crontab -u root -l | { cat; echo "@weekly $SCRIPTS/dockerprune.sh"; } | crontab -u root -
-    echo "Docker automatic prune job added."
+    echo "Adicionou servico automatico Docker Prune."
     echo
-    echo "Collabora is now succesfylly installed."
-    echo "You may have to reboot before Docker will load correctly."
-    any_key "Press any key to continue... "
+    echo "Collabora agora esta instalado com sucesso."
+    echo "Talvez voce precise reiniciar antes que o Docker seja carregado corretamente."
+    any_key "pressione qualquer tecla para continuar... "
 fi
