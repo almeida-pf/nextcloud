@@ -39,47 +39,47 @@ check_command update-rc.d fail2ban disable
 
 if [ -z "$NCLOG" ]
 then
-    echo "nextcloud.log not found"
-    echo "Please add your logpath to $NCPATH/config/config.php and restart this script."
+    echo "nextcloud.log nao encontrado"
+    echo "Adicione seu logpath para $NCPATH/config/config.php e reinicie este script."
     exit 1
 else
     chown www-data:www-data "$NCLOG"
 fi
 
-# Set values in config.php
+# Defini valores em config.php
 sudo -u www-data php "$NCPATH/occ" config:system:set loglevel --value=2
 sudo -u www-data php "$NCPATH/occ" config:system:set log_type --value=file
 sudo -u www-data php "$NCPATH/occ" config:system:set logfile  --value="$NCLOG"
 sudo -u www-data php "$NCPATH/occ" config:system:set logtimezone  --value="$(cat /etc/timezone)"
 
-# Create nextcloud.conf file
+# Criar arquivo nextcloud.conf
 cat << NCONF > /etc/fail2ban/filter.d/nextcloud.conf
 [Definition]
 failregex = ^.*Login failed: '.*' \(Remote IP: '<HOST>'.*$
 ignoreregex =
 NCONF
 
-# Create jail.local file
+# Criar arquivo jail.local
 cat << FCONF > /etc/fail2ban/jail.local
-# The DEFAULT allows a global definition of the options. They can be overridden
-# in each jail afterwards.
+# O DEFAULT permite uma definicao global das opcoes. Eles podem ser substituidos
+# em cada um depois.
 [DEFAULT]
 
-# "ignoreip" can be an IP address, a CIDR mask or a DNS host. Fail2ban will not
-# ban a host which matches an address in this list. Several addresses can be
-# defined using space separator.
+# "ignoreip "pode ser um endereço IP, uma mascara CIDR ou um host DNS. Fail2ban nao
+# Proibir um host que corresponda a um endereço nesta lista. Varios enderecos podem ser
+# definidos usando separador de espaço.
 ignoreip = 127.0.0.1/8 192.168.0.0/16 172.16.0.0/12 10.0.0.0/8
 
-# "bantime" is the number of seconds that a host is banned.
+# "bantime" e o numero de segundos que um host esta proibido.
 bantime  = $BANTIME_
 
-# A host is banned if it has generated "maxretry" during the last "findtime"
+# Um host e banido se gerou "maxretry" durante o ultimo "findtime"
 # seconds.
 findtime = $FINDTIME_
 maxretry = $MAXRETRY_
 
 #
-# ACTIONS
+# Acoes
 #
 banaction = iptables-multiport
 protocol = tcp
@@ -114,15 +114,15 @@ logpath  = $NCLOG
 maxretry = $MAXRETRY_
 FCONF
 
-# Update settings
+# Atualiza Configuraçoes
 check_command update-rc.d fail2ban defaults
 check_command update-rc.d fail2ban enable
 check_command service fail2ban restart
 
-# The End
+# E fim
 echo
-echo "Fail2ban is now sucessfully installed."
-echo "Please use 'fail2ban-client set nextcloud unbanip <Banned IP>' to unban certain IPs"
-echo "You can also use 'iptables -L -n' to check which IPs that are banned"
-any_key "Press any key to continue..."
+echo "Fail2ban agora esta instalado com sucesso."
+echo "Por favor, use 'fail2ban-client set nextcloud unbanip <Banned IP>' para cancelar determinados IPs"
+echo "Voce tambem pode usar 'iptables -L -n' para verificar quais IPs sao proibidos"
+any_key "pressione qualquer tecla para continuar..."
 clear
