@@ -137,7 +137,7 @@ else
     clear
 fi
 
-# Atualiza Sistema
+# Atualiza Repositorio
 apt update -q4 & spinner_loading
 
 # Escreve MARIADB e senha para o arquivo e mantenha-o seguro
@@ -485,7 +485,7 @@ check_command run_static_script change-root-profile
 # Instala Redis
 run_static_script redis-server-ubuntu16
 
-# Atualiza
+# Atualiza Repositorio
 apt update -q4 & spinner_loading
 apt dist-upgrade -y
 
