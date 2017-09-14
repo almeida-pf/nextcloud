@@ -7,7 +7,7 @@ unset NC_UPDATE
 unset MYCNFPW
 unset NCDB
 
-# Pablo Almeida
+# Pablo Almeida -2017
 
 # Verifica se ha erros no code e aborta se algo nao estiver correto
 # 1 = ON
