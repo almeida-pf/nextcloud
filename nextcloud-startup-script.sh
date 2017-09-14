@@ -6,7 +6,7 @@ FIRST_IFACE=1 && CHECK_CURRENT_REPO=1 . <(curl -sL https://raw.githubusercontent
 unset FIRST_IFACE
 unset CHECK_CURRENT_REPO
 
-# Pablo Almeida
+# Pablo Almeida - 2017
 
 ## Se desejar ativar o modo Debug ative na linha 60
 
