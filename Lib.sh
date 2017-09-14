@@ -6,7 +6,6 @@ true
 ## variaveis
 
 # Diretorios
-
 SCRIPTS=/var/scripts
 NCPATH=/var/www/nextcloud
 HTML=/var/www
