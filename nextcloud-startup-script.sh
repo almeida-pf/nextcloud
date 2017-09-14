@@ -414,7 +414,7 @@ RCLOCAL
 clear
 
 # Atualiza Sistema
-echo "System will now upgrade..."
+echo "O sistema vai se atualizar..."
 bash $SCRIPTS/update.sh
 
 # Limpeza 2
