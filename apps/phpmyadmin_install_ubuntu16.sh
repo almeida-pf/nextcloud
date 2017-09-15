@@ -14,7 +14,7 @@ unset MYCNFPW
 DEBUG=0
 debug_mode
 
-# Verifica root
+# Verifica se e root
 if ! is_root
 then
     printf "\n${Red}Desculpe, voce nao e root.\n${Color_Off}Voce deve digitar: ${Cyan}sudo ${Color_Off}bash %s/phpmyadmin_install.sh\n" "$SCRIPTS"
