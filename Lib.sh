@@ -30,7 +30,7 @@ INTERFACES="/etc/network/interfaces"
 NETMASK=$($IFCONFIG | grep -w inet |grep -v 127.0.0.1| awk '{print $4}' | cut -d ":" -f 2)
 GATEWAY=$(route -n|grep "UG"|grep -v "UGH"|cut -f 10 -d " ")
 # Repositorio
-GITHUB_REPO="https://raw.githubusercontent.com/nextcloud/vm/master"
+GITHUB_REPO="https://raw.githubusercontent.com/almeida-pf/nextcloud"
 STATIC="$GITHUB_REPO/static"
 LETS_ENC="$GITHUB_REPO/lets-encrypt"
 APP="$GITHUB_REPO/apps"
@@ -132,7 +132,7 @@ APACHE2=/etc/apache2/apache2.conf
 
 ## funcoes
 
-# Se o script estiver sendo executado como root?
+# Se o script estiver sendo executado como root
 #
 # Examplo:
 # se for root
@@ -216,7 +216,7 @@ sed -i 's/  php_value memory_limit.*/# php_value memory_limit 512M/g' "$NCPATH"/
 
 # Verifica se o programa esta instalado ( esta instalado apache2)
 is_this_installed() {
-if [ "$(dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -c "ok installed")" == "1" ]
+if [ "$(dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -c "ok instalado")" == "1" ]
 then
     echo "${1}instalado, ele deve ser um servidor limpo."
     exit 1
@@ -267,7 +267,7 @@ check_command() {
   if ! eval "$*"
   then
      printf "${IRed}Desculpe, mas algo deu errado. Informe esta questao para $ISSUES E incluir a saída da mensagem de erro. Obrigado!${Color_Off}\n"
-     echo "$* failed"
+     echo "$* falha"
     exit 1
   fi
 }
