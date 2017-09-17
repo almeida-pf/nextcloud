@@ -12,7 +12,7 @@ FIRST_IFACE=1 && CHECK_CURRENT_REPO=1 . <(curl -sL https://raw.githubusercontent
 unset FIRST_IFACE
 unset CHECK_CURRENT_REPO
 
-# Verifique se ha erros no codigo e aborta se algo nao estiver correto
+# Verifica se ha erros no codigo e aborta se algo nao estiver correto
 # 1 = ON
 # 0 = OFF
 DEBUG=0
@@ -53,27 +53,27 @@ if ! version 16.04 "$DISTRO" 16.04.4; then
     exit
 fi
 
-# Verifique se a chave esta disponivel
+# Verifica se a chave esta disponivel
 if ! wget -q -T 10 -t 2 "$NCREPO" > /dev/null
 then
     echo "Nextcloud O repo nao esta disponivel, saindo..."
     exit 1
 fi
 
-# Verifique se e um servidor limpo
+# Verifica se e um servidor limpo
 is_this_installed postgresql
 is_this_installed apache2
 is_this_installed php
 is_this_installed mysql-common
 is_this_installed mariadb-server
 
-# Crie $SCRIPTS dir
+# Cria $SCRIPTS dir
 if [ ! -d "$SCRIPTS" ]
 then
     mkdir -p "$SCRIPTS"
 fi
 
-# Mude DNS
+# Muda DNS
 if ! [ -x "$(command -v resolvconf)" ]
 then
     apt install resolvconf -y -q
@@ -102,7 +102,7 @@ fi
 apt install language-pack-en-base -y
 sudo locale-gen "sv_SE.UTF-8" && sudo dpkg-reconfigure --frontend=noninteractive locales
 
-# Verifique onde estao os melhores repositorios e atualize
+# Verifica onde estao os melhores repositorios e atualize
 echo
 printf "O seu repositorio de servidor atual e:  ${Cyan}%s${Color_Off}\n" "$REPO"
 if [[ "no" == $(ask_yes_or_no "Voce quer tentar encontrar um repositorio melhor?") ]]
@@ -311,7 +311,7 @@ sudo -u www-data php "$NCPATH"/occ config:system:set log_rotate_size --value="10
 # https://docs.nextcloud.com/server/12/admin_manual/configuration_server/server_tuning.html#enable-php-opcache
 phpenmod opcache
 {
-echo "# OPcache settings for Nextcloud"
+echo "# OPcache configuracoes para Nextcloud"
 echo "opcache.enable=1"
 echo "opcache.enable_cli=1"
 echo "opcache.interned_strings_buffer=8"
@@ -396,7 +396,7 @@ then
     </IfModule>
 
     <Directory "$NCDATA">
-    # just in case if .htaccess gets disabled
+    # apenas no caso do .htaccess ficar desativado
     Require all denied
     </Directory>
 
@@ -408,7 +408,7 @@ then
     SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
 </VirtualHost>
 SSL_CREATE
-    echo "$SSL_CONF was successfully created"
+    echo "$SSL_CONF foi criado com sucesso"
 fi
 
 # Habilitando novo config
@@ -478,7 +478,7 @@ download_static_script history
 chmod +x -R "$SCRIPTS"
 chown root:root -R "$SCRIPTS"
 
-# Prepare para o primeiro Boot
+# Prepara para o primeiro Boot
 check_command run_static_script change-ncadmin-profile
 check_command run_static_script change-root-profile
 
@@ -499,7 +499,7 @@ apt autoremove -y
 apt autoclean
 find /root "/home/$UNIXUSER" -type f \( -name '*.sh*' -o -name '*.html*' -o -name '*.tar*' -o -name '*.zip*' \) -delete
 
-# Instale os kernels virtuais para Hyper-V, E extra para UTF8 Modulo do kernel + Collabora e OnlyOffice
+# Instala os kernels virtuais para Hyper-V, E extra para UTF8 Modulo do kernel + Collabora e OnlyOffice
 # Kernel 4.4
 apt install --install-recommends -y \
 linux-virtual-lts-xenial \
