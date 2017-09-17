@@ -251,13 +251,13 @@ fi
 
 cat << LETSENC
 +-----------------------------------------------+
-|  The following script will install a trusted  |
-|  SSL certificate through Let's Encrypt.       |
+|  O script a seguir ira instalar um            |
+|  Certificado SSL atraves Let's Encrypt.       |
 +-----------------------------------------------+
 LETSENC
 
 # Let's Encrypt
-if [[ "yes" == $(ask_yes_or_no "Do you want to install SSL?") ]]
+if [[ "yes" == $(ask_yes_or_no "Voce deseja instalar SSL?") ]]
 then
     bash $SCRIPTS/activate-ssl.sh
 else
