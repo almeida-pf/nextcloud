@@ -316,7 +316,7 @@ download_static_script() {
     rm -f "${SCRIPTS}/${1}.sh" "${SCRIPTS}/${1}.php" "${SCRIPTS}/${1}.py"
     if ! { wget -q "${STATIC}/${1}.sh" -P "$SCRIPTS" || wget -q "${STATIC}/${1}.php" -P "$SCRIPTS" || wget -q "${STATIC}/${1}.py" -P "$SCRIPTS"; }
     then
-        echo "{$1} download falhou. execute: 'sudo wget ${STATIC}/${1}.sh|.php|.py' again."
+        echo "{$1} download falhou. execute: 'sudo wget ${STATIC}/${1}.sh|.php|.py' novamente."
         echo "Se voce receber este erro ao executar o nextcloud-startup-script entao apenas reexecute:"
         echo "'sudo bash $SCRIPTS/nextcloud-startup-script.sh' e todos os scriptis serao baixados novamente"
         exit 1
