@@ -26,7 +26,7 @@ cat << INST2
 | Se voce nunca fez isso antes, pode seguir as                          |
 | instrucoes de instalacao aqui: https://goo.gl/JVxuPh                  |
 |                                                                       |
-| Voce pode agendar o processo de atualização Nextcloud                 |
+| Voce pode agendar o processo de atualizacao Nextcloud                 |
 |  usando um cron job.                                                  |
 | Isso e feito usando um script incorporado nesta VM que automaticamente|
 | atualiza Nextcloud, define permissoes seguras e registra o sucesso    |
