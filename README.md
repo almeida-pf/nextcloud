@@ -1,5 +1,5 @@
 # nextcloud
-Nextcloud VM
+Nextcloud VM Créditos Daniel Hanson @ Tech and Me
 
 Apoiar o desenvolvimento
 
