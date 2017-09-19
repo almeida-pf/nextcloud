@@ -15,7 +15,7 @@ debug_mode
 $WGET -q --tries=20 --timeout=10 http://www.google.com -O /tmp/google.idx &> /dev/null
 if [ ! -s /tmp/google.idx ]
 then
-    printf "${Red}Not Connected!${Color_Off}\n"
+    printf "${Red}Sem conexao!${Color_Off}\n"
 else
     printf "Conectado!\n"
 fi
