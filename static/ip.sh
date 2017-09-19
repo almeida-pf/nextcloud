@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Tech and Me © - 2017, https://www.techandme.se/
+# # Pablo Almeida - 2017
 
 # shellcheck disable=2034,2059
 true
@@ -22,14 +22,17 @@ auto lo $IFACE
 iface lo inet loopback
 
 # Principal interface de rede
+
 iface $IFACE inet static
 pre-up /sbin/ethtool -K $IFACE tso off
 pre-up /sbin/ethtool -K $IFACE gso off
+
 # Ajuste https://github.com/nextcloud/vm/issues/92:
 pre-up ip link set dev $IFACE mtu 1430
 
 # A melhor opcao e mudar o endereco para estatico
 # para algo fora do seu alcance DHCP.
+
 address $ADDRESS
 netmask $NETMASK
 gateway $GATEWAY
