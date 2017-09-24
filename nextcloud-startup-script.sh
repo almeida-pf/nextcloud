@@ -335,6 +335,15 @@ else
 fi
 clear
 
+# Mudar senha
+printf "${Color_Off}\n"
+echo "Para melhor seguranca, altere a senha do usuario do sistema para [$UNIXUSER]"
+any_key "Pressione qualquer tecla para mudar a senha do usuario do sistema..."
+while true
+do
+    sudo passwd "$UNIXUSER" && break
+done
+
 echo
 clear
 NCADMIN=$(sudo -u www-data php $NCPATH/occ user:list | awk '{print $3}')
